@@ -1,0 +1,11 @@
+# Keep the Cloud Run source upload small and free of local configuration.
+.venv
+**/__pycache__
+*.py[cod]
+.pytest_cache
+tests
+.env
+service-account*.json
+README.md
+requirements-dev.txt
+pytest.ini

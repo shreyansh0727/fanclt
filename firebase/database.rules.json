@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "devices": {
+      "$dev": {
+        ".read": "auth != null && (auth.token.dev == $dev || data.child('owner').val() == auth.uid)",
+        "info": { ".write": "auth != null && auth.token.dev == $dev" },
+        "state": { ".write": "auth != null && auth.token.dev == $dev" },
+        "online": { ".write": "auth != null && auth.token.dev == $dev" },
+        "acks": {
+          "$cmd": { ".write": "auth != null && auth.token.dev == $dev" }
+        },
+        "commands": {
+          "$cmd": {
+            ".write": "auth != null && data.parent().parent().child('owner').val() == auth.uid"
+          }
+        }
+      }
+    }
+  }
+}

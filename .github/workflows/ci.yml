@@ -1,0 +1,142 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "22"
+
+jobs:
+  guards:
+    name: Repo guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      # The web API key and device secrets only ever live in Cloud Run env vars
+      # and the local (untracked) .env files.
+      - name: No Firebase keys or credentials in git
+        run: |
+          if git grep -nE 'AIza[0-9A-Za-z_-]{35}' -- . ; then
+            echo "::error::A Firebase web API key is committed. Remove it and rotate the key."
+            exit 1
+          fi
+          if git ls-files | grep -E '(^|/)\.env$|service-account.*\.json$' ; then
+            echo "::error::A .env or service-account file is tracked."
+            exit 1
+          fi
+      - name: RTDB rules parse
+        run: python -m json.tool firebase/database.rules.json > /dev/null
+
+  backend:
+    name: Backend (pytest + container)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt -r backend/requirements-dev.txt
+      - name: Tests
+        working-directory: backend
+        run: python -m pytest -q
+      # The Cloud Run image is the deployable artifact, so build it and prove it
+      # boots with the memory backends (no Firebase credentials in CI).
+      - name: Build container
+        run: docker build -t fanctl-api:ci backend
+      - name: Container smoke test
+        run: |
+          set -euo pipefail
+          docker run -d --name fanctl-api -p 8080:8080 \
+            -e FANCTL_ENV=ci \
+            -e FANCTL_REPO_BACKEND=memory \
+            -e FANCTL_RTDB_BACKEND=memory \
+            -e FANCTL_SCHEDULER_ENABLED=0 \
+            fanctl-api:ci
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/api/v1/health > /tmp/health.json; then
+              break
+            fi
+            sleep 1
+          done
+          cat /tmp/health.json
+          grep -q '"ok":true' /tmp/health.json
+          grep -q '"repo":"memory"' /tmp/health.json
+          docker logs fanctl-api
+          docker rm -f fanctl-api
+
+  firmware:
+    name: Firmware (ESP32-C6)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ hashFiles('firmware/platformio.ini') }}
+          restore-keys: pio-${{ runner.os }}-
+      - name: Install PlatformIO
+        run: pip install "platformio>=6.1,<7"
+      - name: Build
+        working-directory: firmware
+        run: pio run
+      - name: Check the production endpoint is compiled in
+        working-directory: firmware
+        run: |
+          set -euo pipefail
+          bin=$(ls .pio/build/*/firmware.bin | head -n1)
+          grep -qa 'fanctl-api-hxnciith6a-el.a.run.app' "$bin"
+          if grep -qa '192.168.31.104' "$bin"; then
+            echo "::error::Development LAN address is baked into the firmware image."
+            exit 1
+          fi
+      - name: Publish firmware image
+        uses: actions/upload-artifact@v4
+        with:
+          name: fanctl-firmware
+          path: |
+            firmware/.pio/build/*/firmware.bin
+            firmware/.pio/build/*/firmware.elf
+          if-no-files-found: error
+
+  app:
+    name: App (typecheck)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        working-directory: app
+        run: npm run typecheck
+      - name: Config resolves without the local .env
+        working-directory: app
+        run: npx expo config --type public --json > /dev/null

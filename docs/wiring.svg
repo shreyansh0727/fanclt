@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1180" width="100%" role="img" aria-labelledby="wiring-title wiring-desc">
+  <title id="wiring-title">FanCtl-8 full wiring diagram</title>
+  <desc id="wiring-desc">ESP32-C6-Pico to 8-channel opto relay board with per-input pull-ups, switched mains loads, DFPlayer Mini with speaker, and 5 V supply.</desc>
+  <style>
+    text { font-family: var(--font-sans, "Segoe UI", system-ui, sans-serif); }
+    .mono { font-family: var(--font-code, ui-monospace, "Cascadia Code", Consolas, monospace); }
+    .bg { fill: var(--inset-bg, #0c1218); }
+    .panel { fill: var(--card-bg, #141b23); stroke: var(--border-standard, #2c3947); stroke-width: 2; }
+    .panel-alt { fill: var(--inset-bg, #0f161d); stroke: var(--border-standard, #2c3947); stroke-width: 1.5; }
+    .ink { fill: var(--seed-fg, #e8edf3); }
+    .muted { fill: var(--seed-muted, #95a3b4); }
+    .accent { fill: var(--seed-primary, #4c8dff); }
+    .wire { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .mains { stroke-width: 4.5; }
+    .thin { fill: none; stroke-width: 1.5; stroke-linecap: round; }
+    .gpio { stroke: #2aa79a; }
+    .v3 { stroke: #d98b1f; }
+    .v5 { stroke: #e5484d; }
+    .gnd { stroke: #7f8c9b; }
+    .spk { stroke: #9a7cf0; }
+    .mL { stroke: #b4661f; }
+    .mN { stroke: #3d7bea; }
+    .mPE { stroke: #68a63c; }
+    .pad { fill: var(--fill-2, #243040); stroke: var(--border-standard, #3a4a5a); stroke-width: 1.5; }
+    .dot { fill: var(--seed-fg, #e8edf3); }
+    .load { fill: var(--card-bg, #141b23); stroke: var(--border-standard, #2c3947); stroke-width: 1.5; }
+    .fuse { fill: var(--card-bg, #141b23); stroke: #b4661f; stroke-width: 2; }
+    .boundary { fill: rgba(214, 69, 69, 0.06); stroke: #d64545; stroke-width: 1.5; stroke-dasharray: 8 6; }
+    .danger { fill: #e0625f; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="1600" height="1180" rx="16"/>
+
+  <!-- ================= title ================= -->
+  <text class="ink" x="40" y="48" font-size="30" font-weight="600">FanCtl-8 — full wiring</text>
+  <text class="muted" x="40" y="76" font-size="16">ESP32-C6-Pico · 8-channel opto relay board · DFPlayer Mini · 5 V 2 A supply</text>
+
+  <!-- ================= legend ================= -->
+  <g font-size="14">
+    <line class="wire gpio" x1="980" y1="38" x2="1010" y2="38"/><text class="ink" x="1018" y="43">GPIO signal</text>
+    <line class="wire v3" x1="1108" y1="38" x2="1138" y2="38"/><text class="ink" x="1146" y="43">3V3 pull-up</text>
+    <line class="wire v5" x1="1236" y1="38" x2="1266" y2="38"/><text class="ink" x="1274" y="43">+5 V</text>
+    <line class="wire gnd" x1="1340" y1="38" x2="1370" y2="38"/><text class="ink" x="1378" y="43">GND</text>
+
+    <line class="wire spk" x1="980" y1="66" x2="1010" y2="66"/><text class="ink" x="1018" y="71">Speaker</text>
+    <line class="wire mL" x1="1108" y1="66" x2="1138" y2="66"/><text class="ink" x="1146" y="71">Mains L</text>
+    <line class="wire mN" x1="1236" y1="66" x2="1266" y2="66"/><text class="ink" x="1274" y="71">Mains N</text>
+    <line class="wire mPE" x1="1340" y1="66" x2="1370" y2="66"/><text class="ink" x="1378" y="71">Earth</text>
+
+    <circle class="dot" cx="986" cy="94" r="4.5"/><text class="muted" x="1000" y="99">= joined</text>
+    <line class="wire gnd" x1="1108" y1="94" x2="1138" y2="94"/><text class="muted" x="1146" y="99">crossing, no dot = not connected</text>
+  </g>
+  <g class="muted" font-size="13">
+    <path class="thin gnd" d="M992 118 v10 M978 128 h28 M983 134 h18 M988 140 h8"/>
+    <text x="1012" y="136">chassis / common ground node</text>
+  </g>
+
+  <!-- ================= ESP32 board ================= -->
+  <rect class="panel" x="90" y="150" width="300" height="660" rx="12"/>
+  <text class="ink" x="240" y="184" font-size="24" font-weight="600" text-anchor="middle">ESP32-C6-Pico</text>
+  <text class="muted" x="240" y="205" font-size="14" text-anchor="middle">ESP32-C6-MINI-1 · 4 MB · USB-C</text>
+  <text class="muted" x="240" y="224" font-size="13" text-anchor="middle">only the pins used by this build are shown</text>
+
+  <!-- 3V3 pin, left edge -->
+  <rect class="pad" x="82" y="242" width="16" height="16" rx="3"/>
+  <text class="ink mono" x="106" y="255" font-size="16">3V3</text>
+
+  <!-- relay GPIO pins, right edge -->
+  <g class="mono" font-size="16">
+    <rect class="pad" x="382" y="292" width="16" height="16" rx="3"/><text class="ink" x="372" y="305" text-anchor="end">GP0</text>
+    <rect class="pad" x="382" y="344" width="16" height="16" rx="3"/><text class="ink" x="372" y="357" text-anchor="end">GP1</text>
+    <rect class="pad" x="382" y="396" width="16" height="16" rx="3"/><text class="ink" x="372" y="409" text-anchor="end">GP2</text>
+    <rect class="pad" x="382" y="448" width="16" height="16" rx="3"/><text class="ink" x="372" y="461" text-anchor="end">GP3</text>
+    <rect class="pad" x="382" y="500" width="16" height="16" rx="3"/><text class="ink" x="372" y="513" text-anchor="end">GP6</text>
+    <rect class="pad" x="382" y="552" width="16" height="16" rx="3"/><text class="ink" x="372" y="565" text-anchor="end">GP7</text>
+    <rect class="pad" x="382" y="604" width="16" height="16" rx="3"/><text class="ink" x="372" y="617" text-anchor="end">GP14</text>
+    <rect class="pad" x="382" y="656" width="16" height="16" rx="3"/><text class="ink" x="372" y="669" text-anchor="end">GP20</text>
+    <rect class="pad" x="382" y="732" width="16" height="16" rx="3"/><text class="ink" x="372" y="745" text-anchor="end">GND</text>
+  </g>
+
+  <!-- audio pins, bottom edge -->
+  <g class="mono" font-size="15" text-anchor="middle">
+    <rect class="pad" x="132" y="802" width="16" height="16" rx="3"/><text class="ink" x="140" y="790">GND</text>
+    <rect class="pad" x="172" y="802" width="16" height="16" rx="3"/><text class="ink" x="180" y="790">GP18</text>
+    <rect class="pad" x="212" y="802" width="16" height="16" rx="3"/><text class="ink" x="220" y="790">GP19</text>
+    <rect class="pad" x="252" y="802" width="16" height="16" rx="3"/><text class="ink" x="260" y="790">GP21</text>
+  </g>
+  <text class="muted" x="240" y="756" font-size="13" text-anchor="middle">BOOT / GP9: 3 s portal · 8 s factory reset</text>
+
+  <!-- USB-C -->
+  <rect class="panel-alt" x="318" y="802" width="64" height="18" rx="5"/>
+  <text class="muted" x="350" y="840" font-size="14" text-anchor="middle">USB-C 5 V</text>
+
+  <!-- ================= 3V3 pull-ups ================= -->
+  <path class="wire v3" d="M90 250 H52 V130 H620 V278"/>
+  <text class="v3" x="330" y="118" font-size="14" text-anchor="middle">3V3 → 8 × 10 kΩ pull-ups</text>
+
+  <!-- bus (segmented so it visibly does not touch the signal wires) -->
+  <path class="wire v3" d="M620 278 V294 M620 306 V346 M620 358 V398 M620 410 V450 M620 462 V502 M620 514 V554 M620 566 V606 M620 618 V658 M620 670 V686"/>
+  <text class="v3" x="612" y="284" font-size="15" text-anchor="end">3V3</text>
+
+  <!-- one resistor per channel, tapping the signal wire -->
+  <g class="wire gpio">
+    <path d="M398 300 H700"/><path d="M398 352 H700"/><path d="M398 404 H700"/><path d="M398 456 H700"/>
+    <path d="M398 508 H700"/><path d="M398 560 H700"/><path d="M398 612 H700"/><path d="M398 664 H700"/>
+  </g>
+  <g class="dot">
+    <circle cx="684" cy="300" r="4.5"/><circle cx="684" cy="352" r="4.5"/><circle cx="684" cy="404" r="4.5"/><circle cx="684" cy="456" r="4.5"/>
+    <circle cx="684" cy="508" r="4.5"/><circle cx="684" cy="560" r="4.5"/><circle cx="684" cy="612" r="4.5"/><circle cx="684" cy="664" r="4.5"/>
+  </g>
+  <g class="wire v3">
+    <path d="M620 282 H628"/><path d="M620 334 H628"/><path d="M620 386 H628"/><path d="M620 438 H628"/>
+    <path d="M620 490 H628"/><path d="M620 542 H628"/><path d="M620 594 H628"/><path d="M620 646 H628"/>
+    <path d="M676 282 H684 V300"/><path d="M676 334 H684 V352"/><path d="M676 386 H684 V404"/><path d="M676 438 H684 V456"/>
+    <path d="M676 490 H684 V508"/><path d="M676 542 H684 V560"/><path d="M676 594 H684 V612"/><path d="M676 646 H684 V664"/>
+  </g>
+  <g>
+    <rect class="panel-alt" x="628" y="275" width="48" height="14" rx="3" stroke="#d98b1f"/>
+    <rect class="panel-alt" x="628" y="327" width="48" height="14" rx="3" stroke="#d98b1f"/>
+    <rect class="panel-alt" x="628" y="379" width="48" height="14" rx="3" stroke="#d98b1f"/>
+    <rect class="panel-alt" x="628" y="431" width="48" height="14" rx="3" stroke="#d98b1f"/>
+    <rect class="panel-alt" x="628" y="483" width="48" height="14" rx="3" stroke="#d98b1f"/>
+    <rect class="panel-alt" x="628" y="535" width="48" height="14" rx="3" stroke="#d98b1f"/>
+    <rect class="panel-alt" x="628" y="587" width="48" height="14" rx="3" stroke="#d98b1f"/>
+    <rect class="panel-alt" x="628" y="639" width="48" height="14" rx="3" stroke="#d98b1f"/>
+  </g>
+
+  <!-- ================= relay module ================= -->
+  <rect class="panel" x="700" y="240" width="260" height="570" rx="12"/>
+  <text class="ink" x="830" y="270" font-size="20" font-weight="600" text-anchor="middle">8-channel relay board</text>
+  <text class="muted" x="830" y="290" font-size="13" text-anchor="middle">opto inputs · active LOW</text>
+
+  <g class="mono" font-size="14">
+    <text class="ink" x="712" y="305">IN1</text><text class="ink" x="712" y="357">IN2</text><text class="ink" x="712" y="409">IN3</text><text class="ink" x="712" y="461">IN4</text>
+    <text class="ink" x="712" y="513">IN5</text><text class="ink" x="712" y="565">IN6</text><text class="ink" x="712" y="617">IN7</text><text class="ink" x="712" y="669">IN8</text>
+  </g>
+  <g class="pad">
+    <rect x="692" y="292" width="14" height="14" rx="3"/><rect x="692" y="344" width="14" height="14" rx="3"/>
+    <rect x="692" y="396" width="14" height="14" rx="3"/><rect x="692" y="448" width="14" height="14" rx="3"/>
+    <rect x="692" y="500" width="14" height="14" rx="3"/><rect x="692" y="552" width="14" height="14" rx="3"/>
+    <rect x="692" y="604" width="14" height="14" rx="3"/><rect x="692" y="656" width="14" height="14" rx="3"/>
+  </g>
+
+  <!-- internal channel strips: coil K1..K8 and contact to COM/NO -->
+  <g class="thin" stroke="var(--border-subtle, #33404e)">
+    <path d="M706 300 H790"/><path d="M706 352 H790"/><path d="M706 404 H790"/><path d="M706 456 H790"/>
+    <path d="M706 508 H790"/><path d="M706 560 H790"/><path d="M706 612 H790"/><path d="M706 664 H790"/>
+    <path d="M850 300 L948 290 M850 300 L948 310"/><path d="M850 352 L948 342 M850 352 L948 362"/>
+    <path d="M850 404 L948 394 M850 404 L948 414"/><path d="M850 456 L948 446 M850 456 L948 466"/>
+    <path d="M850 508 L948 498 M850 508 L948 518"/><path d="M850 560 L948 550 M850 560 L948 570"/>
+    <path d="M850 612 L948 602 M850 612 L948 622"/><path d="M850 664 L948 654 M850 664 L948 674"/>
+  </g>
+  <g class="panel-alt" font-size="11" text-anchor="middle">
+    <rect x="790" y="289" width="60" height="22" rx="4"/><text class="muted" x="820" y="304">K1</text>
+    <rect x="790" y="341" width="60" height="22" rx="4"/><text class="muted" x="820" y="356">K2</text>
+    <rect x="790" y="393" width="60" height="22" rx="4"/><text class="muted" x="820" y="408">K3</text>
+    <rect x="790" y="445" width="60" height="22" rx="4"/><text class="muted" x="820" y="460">K4</text>
+    <rect x="790" y="497" width="60" height="22" rx="4"/><text class="muted" x="820" y="512">K5</text>
+    <rect x="790" y="549" width="60" height="22" rx="4"/><text class="muted" x="820" y="564">K6</text>
+    <rect x="790" y="601" width="60" height="22" rx="4"/><text class="muted" x="820" y="616">K7</text>
+    <rect x="790" y="653" width="60" height="22" rx="4"/><text class="muted" x="820" y="668">K8</text>
+  </g>
+  <text class="muted" x="830" y="700" font-size="13" text-anchor="middle">per channel, right edge:</text>
+  <text class="muted" x="830" y="718" font-size="13" text-anchor="middle">COM = upper pad · NO = lower pad</text>
+  <text class="muted" x="830" y="736" font-size="13" text-anchor="middle">contacts 10 A resistive — derate for fans</text>
+  <text class="muted" x="830" y="754" font-size="13" text-anchor="middle">VCC 3.3 V (opto) · JD-VCC 5 V (coils)</text>
+
+  <!-- relay contact pads, right edge -->
+  <g class="pad">
+    <rect x="952" y="283" width="14" height="14" rx="3"/><rect x="952" y="303" width="14" height="14" rx="3"/>
+    <rect x="952" y="335" width="14" height="14" rx="3"/><rect x="952" y="355" width="14" height="14" rx="3"/>
+    <rect x="952" y="387" width="14" height="14" rx="3"/><rect x="952" y="407" width="14" height="14" rx="3"/>
+    <rect x="952" y="439" width="14" height="14" rx="3"/><rect x="952" y="459" width="14" height="14" rx="3"/>
+    <rect x="952" y="491" width="14" height="14" rx="3"/><rect x="952" y="511" width="14" height="14" rx="3"/>
+    <rect x="952" y="543" width="14" height="14" rx="3"/><rect x="952" y="563" width="14" height="14" rx="3"/>
+    <rect x="952" y="595" width="14" height="14" rx="3"/><rect x="952" y="615" width="14" height="14" rx="3"/>
+    <rect x="952" y="647" width="14" height="14" rx="3"/><rect x="952" y="667" width="14" height="14" rx="3"/>
+  </g>
+
+  <!-- control header on the bottom edge -->
+  <g class="mono" font-size="12" text-anchor="middle">
+    <rect class="pad" x="712" y="802" width="16" height="16" rx="3"/><text class="ink" x="720" y="796">GND</text>
+    <rect class="pad" x="752" y="802" width="16" height="16" rx="3"/><text class="ink" x="760" y="796">JD-VCC</text>
+    <rect class="pad" x="792" y="802" width="16" height="16" rx="3"/><text class="ink" x="800" y="796">VCC</text>
+  </g>
+
+  <!-- ================= GPIO wires to IN pins ================= -->
+  <g class="wire gpio">
+    <path d="M398 300 H692"/><path d="M398 352 H692"/><path d="M398 404 H692"/><path d="M398 456 H692"/>
+    <path d="M398 508 H692"/><path d="M398 560 H692"/><path d="M398 612 H692"/><path d="M398 664 H692"/>
+  </g>
+
+  <!-- ================= mains boundary ================= -->
+  <rect class="boundary" x="966" y="266" width="600" height="884" rx="12"/>
+  <text class="danger" x="978" y="290" font-size="14" font-weight="600">MAINS 230 V</text>
+
+  <!-- ================= load boxes ================= -->
+  <g>
+    <rect class="load" x="1120" y="278" width="200" height="44" rx="8"/>
+    <text class="ink" x="1134" y="298" font-size="18" font-weight="500">Fan</text>
+    <text class="muted" x="1134" y="314" font-size="13">CH 1 · inductive · snubber</text>
+
+    <rect class="load" x="1120" y="330" width="200" height="44" rx="8"/>
+    <text class="ink" x="1134" y="350" font-size="18" font-weight="500">Light 1</text>
+    <text class="muted" x="1134" y="366" font-size="13">CH 2</text>
+
+    <rect class="load" x="1120" y="382" width="200" height="44" rx="8"/>
+    <text class="ink" x="1134" y="402" font-size="18" font-weight="500">Light 2</text>
+    <text class="muted" x="1134" y="418" font-size="13">CH 3</text>
+
+    <rect class="load" x="1120" y="434" width="200" height="44" rx="8"/>
+    <text class="ink" x="1134" y="454" font-size="18" font-weight="500">Light 3</text>
+    <text class="muted" x="1134" y="470" font-size="13">CH 4</text>
+
+    <rect class="load" x="1120" y="486" width="200" height="44" rx="8"/>
+    <text class="ink" x="1134" y="506" font-size="18" font-weight="500">Socket 1</text>
+    <text class="muted" x="1134" y="522" font-size="13">CH 5 · 10 A max</text>
+
+    <rect class="load" x="1120" y="538" width="200" height="44" rx="8"/>
+    <text class="ink" x="1134" y="558" font-size="18" font-weight="500">Socket 2</text>
+    <text class="muted" x="1134" y="574" font-size="13">CH 6 · 10 A max</text>
+
+    <rect class="load" x="1120" y="590" width="200" height="44" rx="8"/>
+    <text class="ink" x="1134" y="610" font-size="18" font-weight="500">Spare 1</text>
+    <text class="muted" x="1134" y="626" font-size="13">CH 7 · unused</text>
+
+    <rect class="load" x="1120" y="642" width="200" height="44" rx="8"/>
+    <text class="ink" x="1134" y="662" font-size="18" font-weight="500">Spare 2</text>
+    <text class="muted" x="1134" y="678" font-size="13">CH 8 · unused</text>
+  </g>
+
+  <!-- NO wires -->
+  <g class="wire mL mains">
+    <path d="M966 310 H1120"/><path d="M966 362 H1120"/><path d="M966 414 H1120"/><path d="M966 466 H1120"/>
+    <path d="M966 518 H1120"/><path d="M966 570 H1120"/><path d="M966 622 H1120"/><path d="M966 674 H1120"/>
+  </g>
+
+  <!-- COM chain to the fuse (gaps where NO wires cross) -->
+  <path class="wire mL mains" d="M966 290 H990 M990 290 V304 M990 316 V356 M990 368 V408 M990 420 V460 M990 472 V512 M990 524 V564 M990 576 V616 M990 628 V668 M990 680 V880"/>
+  <g class="dot">
+    <circle cx="990" cy="342" r="4.5"/><circle cx="990" cy="394" r="4.5"/><circle cx="990" cy="446" r="4.5"/>
+    <circle cx="990" cy="498" r="4.5"/><circle cx="990" cy="550" r="4.5"/><circle cx="990" cy="602" r="4.5"/><circle cx="990" cy="654" r="4.5"/>
+  </g>
+
+  <!-- N chain -->
+  <path class="wire mN mains" d="M1320 310 H1360 M1320 362 H1360 M1320 414 H1360 M1320 466 H1360 M1320 518 H1360 M1320 570 H1360 M1320 622 H1360 M1320 674 H1360"/>
+  <path class="wire mN mains" d="M1360 310 V960 H1180 V1000"/>
+  <g class="dot">
+    <circle cx="1360" cy="362" r="4.5"/><circle cx="1360" cy="414" r="4.5"/><circle cx="1360" cy="466" r="4.5"/>
+    <circle cx="1360" cy="518" r="4.5"/><circle cx="1360" cy="570" r="4.5"/><circle cx="1360" cy="622" r="4.5"/><circle cx="1360" cy="674" r="4.5"/>
+  </g>
+
+  <!-- fuse -->
+  <rect class="fuse" x="978" y="880" width="24" height="50" rx="4"/>
+  <path class="wire mL mains" d="M990 886 V924"/>
+  <text class="mL" x="1014" y="902" font-size="14" fill="#b4661f">10 A fuse</text>
+  <text class="muted" x="1014" y="920" font-size="13">whole-board L protection</text>
+
+  <!-- L into panel -->
+  <path class="wire mL mains" d="M990 930 V980 H1040 V1000"/>
+
+  <!-- ================= mains panel ================= -->
+  <rect class="panel" x="980" y="1000" width="570" height="140" rx="10"/>
+  <text class="danger" x="1265" y="1050" font-size="18" font-weight="600" text-anchor="middle">MAINS INPUT 230 V</text>
+  <text class="muted" x="1265" y="1072" font-size="13" text-anchor="middle">L → fuse → relay COM chain · NO → load → N</text>
+  <text class="muted" x="1265" y="1092" font-size="13" text-anchor="middle">PE → metal enclosure / Class I loads only</text>
+  <text class="muted" x="1265" y="1112" font-size="13" text-anchor="middle">separate mains and low-voltage compartments</text>
+  <text class="muted" x="1265" y="1132" font-size="13" text-anchor="middle">qualified electrician only — never on a breadboard</text>
+
+  <g class="mono" font-size="14" font-weight="600" text-anchor="middle">
+    <rect class="pad" x="1032" y="992" width="16" height="16" rx="3"/><text class="ink" x="1040" y="1024">L</text>
+    <rect class="pad" x="1172" y="992" width="16" height="16" rx="3"/><text class="ink" x="1180" y="1024">N</text>
+    <rect class="pad" x="1412" y="992" width="16" height="16" rx="3"/><text class="ink" x="1420" y="1024">PE</text>
+  </g>
+
+  <!-- PE -->
+  <path class="wire mPE" d="M1420 1000 V966"/>
+  <g class="thin mPE"><path d="M1400 966 H1440 M1408 975 H1432 M1416 984 H1424"/></g>
+  <text class="muted" x="1434" y="960" font-size="13">to enclosure</text>
+
+  <!-- ================= 5 V supply ================= -->
+  <rect class="panel" x="700" y="1010" width="250" height="130" rx="10"/>
+  <text class="ink" x="825" y="1042" font-size="18" font-weight="600" text-anchor="middle">5 V 2 A supply</text>
+  <text class="muted" x="825" y="1062" font-size="13" text-anchor="middle">relay coils (JD-VCC) + DFPlayer</text>
+  <text class="muted" x="825" y="1080" font-size="13" text-anchor="middle">VCC–JD-VCC jumper removed</text>
+  <text class="muted" x="825" y="1096" font-size="13" text-anchor="middle">coils 5 V · opto 3.3 V · GND shared</text>
+  <text class="muted" x="825" y="1118" font-size="13" text-anchor="middle">mains adapter — AC side in mains bay</text>
+  <g class="mono" font-size="13" text-anchor="middle">
+    <rect class="pad" x="722" y="1002" width="16" height="16" rx="3"/><text class="ink" x="730" y="996">+5V</text>
+    <rect class="pad" x="782" y="1002" width="16" height="16" rx="3"/><text class="ink" x="790" y="996">GND</text>
+  </g>
+
+  <!-- 5 V rail: PSU -> DFPlayer + relay JD-VCC -->
+  <path class="wire v5" d="M730 1010 V910"/>
+  <path class="wire v5" d="M340 910 H760 V810"/>
+  <circle class="dot" cx="730" cy="910" r="4.5"/>
+  <path class="wire v5" d="M340 910 V940"/>
+  <text class="v5" x="560" y="900" font-size="14" text-anchor="middle">+5 V rail</text>
+
+  <!-- 3V3 continues to the relay opto side (VCC); hops over the JD-VCC drop -->
+  <path class="wire v3" d="M620 686 V880 H754 A6 6 0 0 1 766 880 H800 V810"/>
+
+  <!-- grounds -->
+  <path class="wire gnd" d="M720 810 V842"/>
+  <g class="thin gnd"><path d="M702 842 H738 M709 850 H731 M716 858 H724"/></g>
+  <path class="wire gnd" d="M390 740 H450 V790"/>
+  <g class="thin gnd"><path d="M432 790 H468 M439 798 H461 M446 806 H454"/></g>
+  <path class="wire gnd" d="M790 1010 V986 H860"/>
+  <g class="thin gnd"><path d="M842 986 H878 M849 994 H871 M856 1002 H864"/></g>
+  <text class="muted" x="880" y="980" font-size="13">common</text>
+
+  <!-- ================= DFPlayer ================= -->
+  <rect class="panel" x="110" y="940" width="350" height="180" rx="12"/>
+  <text class="ink" x="285" y="1000" font-size="20" font-weight="600" text-anchor="middle">DFPlayer Mini</text>
+  <text class="muted" x="285" y="1020" font-size="14" text-anchor="middle">MP3-TF-16P · microSD voice clips</text>
+  <text class="muted" x="285" y="1062" font-size="13" text-anchor="middle">SPK1/SPK2: bridged — do not ground</text>
+  <text class="muted" x="285" y="1098" font-size="13" text-anchor="middle">microSD (FAT32): /mp3/0001.mp3 … 0051.mp3</text>
+
+  <g class="mono" font-size="13" text-anchor="middle">
+    <rect class="pad" x="132" y="932" width="16" height="16" rx="3"/><text class="ink" x="140" y="974">GND</text>
+    <rect class="pad" x="172" y="932" width="16" height="16" rx="3"/><text class="ink" x="180" y="974">RX</text>
+    <rect class="pad" x="212" y="932" width="16" height="16" rx="3"/><text class="ink" x="220" y="974">TX</text>
+    <rect class="pad" x="252" y="932" width="16" height="16" rx="3"/><text class="ink" x="260" y="974">BUSY</text>
+    <rect class="pad" x="332" y="932" width="16" height="16" rx="3"/><text class="ink" x="340" y="974">VCC</text>
+  </g>
+  <g class="mono" font-size="13" text-anchor="end">
+    <text class="ink" x="448" y="1037">SPK1</text>
+    <text class="ink" x="448" y="1069">SPK2</text>
+  </g>
+
+  <!-- audio wires -->
+  <path class="wire gnd" d="M140 810 V940"/>
+  <path class="wire gpio" d="M180 810 V856 M180 890 V940"/>
+  <rect class="panel-alt" x="172" y="856" width="16" height="34" rx="3" stroke="#2aa79a"/>
+  <text class="muted" x="194" y="878" font-size="12">1kΩ</text>
+  <path class="wire gpio" d="M220 810 V940"/>
+  <path class="wire gpio" d="M260 810 V940"/>
+
+  <!-- speaker -->
+  <rect class="panel" x="520" y="1010" width="150" height="110" rx="10"/>
+  <rect class="panel-alt" x="536" y="1040" width="14" height="38" rx="2"/>
+  <path class="panel-alt" d="M550 1046 L580 1028 V1090 L550 1072 Z"/>
+  <g class="thin spk"><path d="M590 1042 q9 16 0 34"/><path d="M600 1036 q14 22 0 46"/></g>
+  <text class="muted" x="618" y="1052" font-size="13">8 Ω</text>
+  <text class="muted" x="618" y="1072" font-size="13">0.5 W</text>
+  <path class="wire spk" d="M460 1037 H520 M460 1069 H520"/>
+
+  <!-- wiring notes -->
+  <g class="muted" font-size="13">
+    <text x="40" y="1148">One ground symbol = one node. Power the ESP32 from USB-C or VBUS, never both.</text>
+    <text x="40" y="1168">Keep mains and 5 V/GPIO wiring physically separated; mains work by a qualified electrician.</text>
+  </g>
+</svg>

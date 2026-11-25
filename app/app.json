@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "FanCtl",
+    "slug": "fanctl",
+    "version": "1.3.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.fanctl",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
+      }
+    },
+    "android": {
+      "package": "com.example.fanctl",
+      "versionCode": 5,
+      "permissions": [
+        "REQUEST_INSTALL_PACKAGES"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "monochromeImage": "./assets/monochrome-icon.png",
+        "backgroundColor": "#06080D"
+      }
+    },
+    "extra": {
+      "apiBase": "http://192.168.1.10:8000",
+      "firebaseApiKey": "REPLACE_ME",
+      "firebaseAuthDomain": "your-project.firebaseapp.com",
+      "firebaseProjectId": "your-project",
+      "firebaseAppId": "1:000000000000:android:0000000000000000000000",
+      "firebaseDatabaseUrl": "https://your-project-default-rtdb.firebaseio.com",
+      "rtdbEmulator": ""
+    },
+    "plugins": [
+      "expo-status-bar"
+    ]
+  }
+}
