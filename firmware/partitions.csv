@@ -2,10 +2,10 @@
 # has a single 3 MB slot and no space for a second image; two 1.5 MB slots still
 # leave ~20% headroom over the current ~1.26 MB build.
 #
-# NVS keeps its original offset and size, so switching from huge_app.csv over
+# NVS keeps its original offset and size so switching from huge_app.csv over
 # USB leaves Wi-Fi credentials and the pairing intact.
-# Name,   Type, SubType, Offset,   Size,     Flags
-nvs,      data, nvs,     0x9000,   0x5000,
+Name     Type  SubType  Offset    Size
+nvs,     data, nvs,     0x9000,   0x5000,
 otadata,  data, ota,     0xe000,   0x2000,
 app0,     app,  ota_0,   0x10000,  0x180000,
 app1,     app,  ota_1,   0x190000, 0x180000,
