@@ -11,6 +11,7 @@ import { UpdateGate } from './src/components/UpdateGate';
 import { AppProvider, useApp } from './src/lib/store';
 import type { RootStackParamList } from './src/nav';
 import AddDeviceScreen from './src/screens/AddDeviceScreen';
+import AssistantsScreen from './src/screens/AssistantsScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import DeviceScreen from './src/screens/DeviceScreen';
 import DevicesScreen from './src/screens/DevicesScreen';
@@ -76,6 +77,11 @@ function AppContent() {
               options={{ title: 'Pair a controller' }}
             />
             <Stack.Screen name="Schedules" component={SchedulesScreen} />
+            <Stack.Screen
+              name="Assistants"
+              component={AssistantsScreen}
+              options={{ title: 'Voice assistants' }}
+            />
           </>
         ) : (
           <Stack.Screen

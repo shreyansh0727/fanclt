@@ -33,6 +33,13 @@ ROOT = Path(__file__).resolve().parent.parent
 
 STORAGE_HOST = "https://storage.googleapis.com/{bucket}/{path}"
 
+# The APK is ~77 MB; the library's defaults (one 100 MB request, 60 s per
+# request, 120 s total retries) give up on a home uplink. Resumable 4 MB chunks
+# with a 30 minute retry budget survive a slow or flapping connection.
+CHUNK_SIZE = 4 * 1024 * 1024
+UPLOAD_TIMEOUT_S = 300
+UPLOAD_RETRY_BUDGET_S = 1800
+
 
 def sha256_of(path: Path) -> str:
     digest = hashlib.sha256()
@@ -82,9 +89,17 @@ def gcloud_credentials():
 
 
 def upload(client, bucket_name: str, local: Path, object_path: str) -> tuple[str, int]:
+    from google.api_core.retry import Retry
+
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(object_path)
-    blob.upload_from_filename(str(local), content_type="application/octet-stream")
+    blob.chunk_size = CHUNK_SIZE
+    blob.upload_from_filename(
+        str(local),
+        content_type="application/octet-stream",
+        timeout=UPLOAD_TIMEOUT_S,
+        retry=Retry(timeout=UPLOAD_RETRY_BUDGET_S, initial=1.0, maximum=60.0),
+    )
     # Only the release objects are public; the bucket itself stays private.
     blob.make_public()
 

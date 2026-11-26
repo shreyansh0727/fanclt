@@ -8,7 +8,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .api import device_api, devices, health, schedules, updates
+from .api import assistants as assistant_api
+from .api import device_api, devices, google_home, health, oauth, schedules, smartthings, updates
 from .config import Settings, get_settings
 from .context import AppContext
 from .errors import ApiError
@@ -90,6 +91,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(schedules.router, prefix="/api/v1")
     app.include_router(device_api.router, prefix="/api/v1")
     app.include_router(updates.router, prefix="/api/v1")
+    app.include_router(assistant_api.router, prefix="/api/v1")
+    # OAuth paths stay at the root: the platforms store exactly these URLs.
+    app.include_router(oauth.router)
+    app.include_router(google_home.router)
+    app.include_router(smartthings.router)
     return app
 
 

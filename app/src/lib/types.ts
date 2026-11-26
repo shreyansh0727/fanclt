@@ -94,3 +94,12 @@ export interface ScheduleInput {
   action: ScheduleAction;
   enabled?: boolean;
 }
+
+export interface AssistantLink {
+  id: string;
+  /** OAuth client the token was issued to: "google" or "smartthings". */
+  provider: string;
+  client_name: string;
+  created_at: string | null;
+  last_used_at: string | null;
+}

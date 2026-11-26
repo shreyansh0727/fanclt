@@ -85,6 +85,8 @@ void clearPairCode() { setStr("pair", ""); }
 
 String deviceId() { return str("dev_id", ""); }
 String deviceKey() { return str("dev_key", ""); }
+String assistantKey() { return str("asst_key", ""); }
+void saveAssistantKey(const String& key) { setStr("asst_key", key); }
 
 String deviceSecret() {
   String secret = str("dev_secret", "");
@@ -109,6 +111,7 @@ void saveClaim(const String& deviceId, const String& deviceKey) {
 void clearClaim() {
   setStr("dev_id", "");
   setStr("dev_key", "");
+  setStr("asst_key", "");
   clearPairCode();
 }
 

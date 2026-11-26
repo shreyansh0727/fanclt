@@ -9,6 +9,7 @@ __pycache__/
 # Secrets
 service-account.json
 *service-account*.json
+backend/.oauth-clients/
 
 # Node / Expo
 node_modules/

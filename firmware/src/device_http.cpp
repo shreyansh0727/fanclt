@@ -114,12 +114,37 @@ void sendError(int code, const char* error) {
 // A device that is not claimed yet accepts LAN commands (it is in setup mode
 // anyway). Once claimed, a paired device requires the local key that the
 // backend handed to the owner's app.
-bool authorized() {
-  String expected = store::deviceKey();
-  if (expected.length() == 0) return true;
+String presentedKey() {
   String provided = server.header("X-Local-Key");
   if (provided.length() == 0) provided = server.arg("key");
-  return provided == expected;
+  return provided;
+}
+
+bool keyEquals(const String& expected, const String& provided) {
+  if (expected.length() == 0 || expected.length() != provided.length()) return false;
+  uint8_t diff = 0;
+  for (size_t i = 0; i < expected.length(); i++) {
+    diff |= (uint8_t)(expected[i] ^ provided[i]);
+  }
+  return diff == 0;
+}
+
+// The assistant key is a second, revocable credential so a voice-assistant
+// runtime on the LAN never holds the owner's device key. It is accepted for
+// state and commands only - network changes stay owner-only.
+bool authorized() {
+  String owner = store::deviceKey();
+  if (owner.length() == 0) return true;
+  String provided = presentedKey();
+  if (keyEquals(owner, provided)) return true;
+  String assistant = store::assistantKey();
+  return assistant.length() > 0 && keyEquals(assistant, provided);
+}
+
+bool authorizedOwner() {
+  String owner = store::deviceKey();
+  if (owner.length() == 0) return true;
+  return keyEquals(owner, presentedKey());
 }
 
 void handleOptions() {
@@ -288,7 +313,7 @@ void handleSave() {
 // network and the caller holds the local key. The board restarts to apply it
 // and falls back to the portal if the new network does not come up.
 void handleWifi() {
-  if (!authorized()) {
+  if (!authorizedOwner()) {
     sendError(401, "unauthorized");
     return;
   }

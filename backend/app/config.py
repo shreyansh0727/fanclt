@@ -36,6 +36,17 @@ class Settings(BaseSettings):
     scheduler_enabled: bool = True
     scheduler_tick_s: float = 20.0
 
+    # Voice assistants (Google Home, SmartThings). Tokens are opaque and only
+    # their hashes are stored; OAuth clients are seeded out of band with
+    # scripts/register_oauth_client.py.
+    oauth_code_ttl_s: int = 300
+    oauth_access_ttl_s: int = 3600
+    oauth_refresh_ttl_s: int = 365 * 86400
+
+    # Google local fulfillment. Off until the local app is registered in the
+    # Home console: SYNC without a matching bundle only confuses the platform.
+    local_fulfillment: bool = False
+
     log_level: str = "INFO"
 
     @property

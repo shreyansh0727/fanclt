@@ -150,11 +150,30 @@ export default function DevicesScreen({ navigation }: Props) {
           </Card>
         }
         ListFooterComponent={
-          error ? (
-            <Pressable onPress={() => setError(null)}>
-              <Text style={styles.error}>{error}</Text>
+          <View style={styles.footer}>
+            <Pressable
+              onPress={() => navigation.navigate('Assistants')}
+              accessibilityRole="button"
+              accessibilityLabel="Voice assistants"
+            >
+              <Card tone="outlined" style={styles.assistantsCard}>
+                <View style={styles.assistantsRow}>
+                  <View style={styles.assistantsText}>
+                    <Text style={styles.assistantsTitle}>Voice assistants</Text>
+                    <Text style={styles.assistantsSub}>
+                      Google Home and Bixby · manage linked accounts
+                    </Text>
+                  </View>
+                  <Text style={styles.headerAction}>Manage</Text>
+                </View>
+              </Card>
             </Pressable>
-          ) : undefined
+            {error ? (
+              <Pressable onPress={() => setError(null)}>
+                <Text style={styles.error}>{error}</Text>
+              </Pressable>
+            ) : null}
+          </View>
         }
         renderItem={({ item }) => (
           <DeviceCard
@@ -216,6 +235,16 @@ const styles = StyleSheet.create({
   },
   stateDotOn: { backgroundColor: colors.primary },
   cardMeta: { ...type.bodySmall, color: colors.onSurfaceVariant },
+  footer: { gap: spacing.sm },
+  assistantsCard: { paddingVertical: spacing.md },
+  assistantsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  assistantsText: { flex: 1 },
+  assistantsTitle: { ...type.titleSmall, color: colors.onSurface },
+  assistantsSub: { ...type.bodySmall, color: colors.onSurfaceVariant, marginTop: 2 },
   empty: { marginTop: spacing.sm, gap: spacing.sm },
   emptyTitle: { ...type.titleMedium, color: colors.onSurface },
   emptyText: { ...type.bodyMedium, color: colors.onSurfaceVariant },

@@ -1,8 +1,14 @@
 # FanCtl-8
 
-An ESP32 controller for eight mains loads (fan, bulbs, sockets) with a FastAPI + Firebase
-backend and a React Native app. Everything works from outside the house over the internet,
-and switches straight over the LAN when your phone is at home.
+An ESP32 controller for mains loads (fan, bulbs, sockets) with a FastAPI + Firebase backend
+and a React Native app. Everything works from outside the house over the internet, and
+switches straight over the LAN when your phone is at home.
+
+The channel count is a build-time setting: `RELAY_COUNT` in `firmware/src/config.h`
+defaults to **4** (the current 4-relay board); build with `-D RELAY_COUNT=8` for the
+8-channel board. Everything downstream — registration, state arrays, the app's tile
+count, assistant discovery — follows the value the firmware reports, so one codebase
+serves both.
 
 ```
                        internet / LAN
@@ -29,9 +35,9 @@ and switches straight over the LAN when your phone is at home.
 ```
 
 - **Firmware** (`firmware/`): ESP32-C6 (Waveshare ESP32-C6-Pico), Arduino/PlatformIO.
-  Active-low 8-channel optocoupler relay board, NVS-persisted state, captive setup portal,
-  mDNS, local HTTP API, and one outbound HTTPS stream on its own Realtime Database node.
-  No inbound ports needed at home.
+  Active-low optocoupler relay board, 4 channels on this build (`RELAY_COUNT`), NVS-persisted
+  state, captive setup portal, mDNS, local HTTP API, and one outbound HTTPS stream on its own
+  Realtime Database node. No inbound ports needed at home.
 - **Backend** (`backend/`): Python 3.11+, FastAPI, Firebase Auth ID tokens, Firestore via the
   Admin SDK, device registration + custom-token minting, command acknowledgement with
   timeouts, and a server-side schedule runner. It handles claim, device metadata, schedules
@@ -61,9 +67,9 @@ firebase.json       Emulator + deploy config
 | Part | Notes |
 | --- | --- |
 | Waveshare ESP32-C6-Pico | ESP32-C6-MINI-1, 4 MB flash, WiFi 6 + BLE, native USB-C |
-| 8-channel 5 V optocoupler relay module | Active-low, with `VCC`/`JD-VCC` jumper, screw terminals |
-| 5 V 2 A supply | Powers relay coils; do not take coil current from the ESP32 3.3 V rail |
-| 8 × 10 kΩ resistors | Pull-ups from each `IN` pin to 3.3 V (holds relays off during boot) |
+| 4-channel 5 V optocoupler relay module | This build. Active-low, `VCC`/`JD-VCC` jumper if the board has one, screw terminals. An 8-channel board is the same wiring extended to `IN5..IN8` |
+| 5 V supply — 1 A for 4 coils, 2 A if the DFPlayer shares the rail | Powers relay coils; do not take coil current from the ESP32 3.3 V rail |
+| 4 × 10 kΩ resistors (8 for the 8-channel build) | Pull-ups from each `IN` pin to 3.3 V (holds relays off during boot) |
 | DFPlayer Mini (MP3-TF-16P) + microSD | Optional voice announcements; FAT32 card, 32 GB or smaller |
 | 8 Ω 0.5 W speaker | Connects to `SPK1`/`SPK2` on the DFPlayer |
 | 1 kΩ resistor | Series resistor in the ESP32 → DFPlayer RX line |
@@ -88,6 +94,13 @@ Plus: relay `GND` to ESP32 `GND`; relay `VCC` (opto input side) to ESP32 `3V3`; 
 `JD-VCC` from the separate 5 V supply, with the `VCC`/`JD-VCC` jumper removed. `3V3` for the
 opto side matters: it makes `INx` high a true 0 V across the opto LED, so the relay cannot
 half-energise when the ESP32 drives 3.3 V into a 5 V opto board.
+
+Only the first `RELAY_COUNT` rows apply on a given build: the 4-channel board wires
+channels 0–3 (`D0,D1,D2,D3` → `IN1..IN4`) and leaves the rest of the table as reference
+for the 8-channel variant. A cheap board without a `VCC`/`JD-VCC` jumper feeds its coils
+from `VCC`, so that pin goes to **5 V** instead of `3V3`; expect a small risk of a relay
+not releasing (≈1.7 V across the opto LED with a high 3.3 V output) and add a 1 kΩ series
+resistor per `IN` if it shows up.
 
 Full drawing: [docs/wiring.svg](docs/wiring.svg).
 

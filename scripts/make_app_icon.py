@@ -111,6 +111,8 @@ def main() -> int:
     flat_icon(1024).save(ASSETS / "icon.png")
     glyph_for(1024, 0.60).save(ASSETS / "adaptive-icon.png")
     glyph_for(1024, 0.60).save(ASSETS / "monochrome-icon.png")
+    # Google Home / SmartThings developer consoles ask for 144x144.
+    flat_icon(144).save(ASSETS / "assistant-icon-144.png")
 
     densities = {
         "mdpi": 48,

@@ -24,6 +24,10 @@ void clearPairCode();
 
 String deviceId();
 String deviceKey();
+// Second LAN credential, minted by the backend for a voice-assistant local app.
+// Kept separate from deviceKey so the owner's key never reaches the assistant.
+String assistantKey();
+void saveAssistantKey(const String& key);
 // Random per-board secret proving this controller to the backend when it asks
 // for a Firebase token. Generated once and kept in NVS.
 String deviceSecret();

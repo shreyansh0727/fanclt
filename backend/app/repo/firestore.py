@@ -136,7 +136,74 @@ class FirestoreRepo:
 
         return await run_in_threadpool(_read)
 
+    # oauth clients + auth codes -------------------------------------------
+    async def create_oauth_client(self, doc: dict) -> dict:
+        payload = dict(doc)
+        await run_in_threadpool(
+            lambda: self.db.collection("oauth_clients").document(payload["id"]).set(payload)
+        )
+        return payload
+
+    async def get_oauth_client(self, client_id: str) -> dict | None:
+        return await run_in_threadpool(self._get, "oauth_clients", client_id)
+
+    async def create_auth_code(self, doc: dict) -> dict:
+        payload = dict(doc)
+        await run_in_threadpool(
+            lambda: self.db.collection("oauth_codes").document(payload["id"]).set(payload)
+        )
+        return payload
+
+    async def get_auth_code(self, code_hash: str) -> dict | None:
+        return await run_in_threadpool(self._get, "oauth_codes", code_hash)
+
+    async def update_auth_code(self, code_hash: str, patch: dict) -> dict | None:
+        return await run_in_threadpool(self._update, "oauth_codes", code_hash, dict(patch))
+
+    # assistant links ------------------------------------------------------
+    async def create_link(self, doc: dict) -> dict:
+        payload = dict(doc)
+        await run_in_threadpool(
+            lambda: self.db.collection("assistant_links").document(payload["id"]).set(payload)
+        )
+        return payload
+
+    async def get_link(self, link_id: str) -> dict | None:
+        return await run_in_threadpool(self._get, "assistant_links", link_id)
+
+    async def update_link(self, link_id: str, patch: dict) -> dict | None:
+        return await run_in_threadpool(self._update, "assistant_links", link_id, dict(patch))
+
+    async def get_link_by_hash(self, field: str, value: str) -> dict | None:
+        if field not in ("access_hash", "refresh_hash"):
+            raise ValueError(f"unsupported link lookup field: {field}")
+        return await run_in_threadpool(self._first_by, "assistant_links", field, value)
+
+    async def list_links(self, owner_id: str) -> list[dict]:
+        rows = await run_in_threadpool(self._list_by, "assistant_links", "owner_id", owner_id)
+        rows.sort(key=lambda link: aware(link.get("created_at")) or _EPOCH, reverse=True)
+        return rows
+
+    async def delete_link(self, link_id: str) -> None:
+        await run_in_threadpool(
+            lambda: self.db.collection("assistant_links").document(link_id).delete()
+        )
+
+    # assistant command idempotency ----------------------------------------
+    async def get_assistant_command(self, key: str) -> dict | None:
+        return await run_in_threadpool(self._get, "assistant_commands", key)
+
+    async def save_assistant_command(self, doc: dict) -> None:
+        payload = dict(doc)
+        await run_in_threadpool(
+            lambda: self.db.collection("assistant_commands").document(payload["id"]).set(payload)
+        )
+
     # helpers ---------------------------------------------------------------
+    def _get(self, collection: str, doc_id: str) -> dict | None:
+        snapshot = self.db.collection(collection).document(doc_id).get()
+        return {**snapshot.to_dict(), "id": snapshot.id} if snapshot.exists else None
+
     def _first_by(self, collection: str, field: str, value) -> dict | None:
         query = (
             self.db.collection(collection)

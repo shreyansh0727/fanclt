@@ -1,0 +1,16 @@
+{
+  "name": "fanctl-local-fulfillment",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Google local fulfillment app for FanCtl-8 controllers",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@google/local-home-sdk": "^1.5.0",
+    "esbuild": "^0.25.0",
+    "typescript": "~5.6.3"
+  }
+}

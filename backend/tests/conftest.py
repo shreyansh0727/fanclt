@@ -12,8 +12,8 @@ from app.main import create_app
 from app.security import User
 
 USERS = {
-    "token-a": User(uid="user-a", email="a@example.com"),
-    "token-b": User(uid="user-b"),
+    "test-token-a": User(uid="user-a", email="a@example.com"),
+    "test-token-b": User(uid="user-b"),
 }
 
 SECRET = "0123456789abcdef0123456789abcdef"
@@ -45,8 +45,36 @@ def client(app):
     with TestClient(app) as test_client:
         app.state.ctx.verify_token = fake_verifier
         app.state.ctx.mint_token = lambda device_id: f"test-token:{device_id}"
-        test_client.headers.update({"Authorization": "Bearer token-a"})
+        test_client.headers.update({"Authorization": "Bearer test-token-a"})
         yield test_client
+
+
+@pytest.fixture
+def local_app():
+    return create_app(
+        Settings(
+            repo_backend="memory",
+            rtdb_backend="memory",
+            scheduler_enabled=False,
+            command_timeout_s=3.0,
+            log_events=True,
+            local_fulfillment=True,
+        )
+    )
+
+
+@pytest.fixture
+def local_client(local_app):
+    with TestClient(local_app) as test_client:
+        local_app.state.ctx.verify_token = fake_verifier
+        local_app.state.ctx.mint_token = lambda device_id: f"test-token:{device_id}"
+        test_client.headers.update({"Authorization": "Bearer test-token-a"})
+        yield test_client
+
+
+@pytest.fixture
+def local_ctx(local_client, local_app):
+    return local_app.state.ctx
 
 
 @pytest.fixture
@@ -98,6 +126,7 @@ class FakeDevice(threading.Thread):
         self.state = list(state or [False] * count)
         self.seen: set[str] = set()
         self.applied: list[str] = []
+        self.assistant_keys: list[str] = []
         self._stop = threading.Event()
         self.rtdb.put_sync(f"devices/{device_id}/info", self.info())
         self.rtdb.put_sync(f"devices/{device_id}/state", self.state)
@@ -150,11 +179,13 @@ class FakeDevice(threading.Thread):
                 error = "bad_channel"
         elif action in ("pet", "feed", "play", "sleep", "wake", "alarm", "alarm_stop", "reminder"):
             pass  # display/audio reactions only, the relay state is untouched
+        elif action == "set_assistant_key":
+            self.assistant_keys.append(str(command.get("key") or ""))
         elif action != "identify":
             error = "bad_action"
 
         self.applied.append(action or "")
-        if action != "identify":
+        if action not in ("identify", "set_assistant_key"):
             self.rtdb.put_sync(f"devices/{self.device_id}/state", self.state)
         self.ack(command_id, error is None, error)
 

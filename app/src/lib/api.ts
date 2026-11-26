@@ -1,6 +1,7 @@
 import { API_BASE, REQUEST_TIMEOUT_MS } from '../config';
 import { auth } from '../firebase';
 import type {
+  AssistantLink,
   CommandBody,
   CommandResult,
   Device,
@@ -105,4 +106,7 @@ export const api = {
     }),
   deleteSchedule: (scheduleId: string) =>
     request<void>(`/schedules/${scheduleId}`, { method: 'DELETE' }),
+  listAssistantLinks: () => request<AssistantLink[]>('/assistants/links'),
+  revokeAssistantLink: (linkId: string) =>
+    request<void>(`/assistants/links/${encodeURIComponent(linkId)}`, { method: 'DELETE' }),
 };

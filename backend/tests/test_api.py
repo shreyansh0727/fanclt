@@ -74,7 +74,7 @@ def test_other_user_cannot_see_device(client, ctx):
     with connected_device(client, ctx) as session:
         response = client.get(
             f"/api/v1/devices/{session.id}",
-            headers={"Authorization": "Bearer token-b"},
+            headers={"Authorization": "Bearer test-token-b"},
         )
         assert response.status_code == 403
         assert response.json()["error"]["code"] == "forbidden"

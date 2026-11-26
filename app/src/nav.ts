@@ -4,4 +4,5 @@ export type RootStackParamList = {
   Device: { deviceId: string; name: string };
   AddDevice: undefined;
   Schedules: { deviceId: string; deviceName: string };
+  Assistants: undefined;
 };

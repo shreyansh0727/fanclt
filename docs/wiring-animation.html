@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FanCtl-4 wiring animation</title>
+<style>html,body{margin:0;background:#0a0e13}</style>
+</head>
+<body>
+<div class="fc" id="fanctl-wiring">
+  <header class="head">
+    <div class="kicker">FanCtl-4 · firmware 1.2.0 · RELAY_COUNT 4</div>
+    <h1>How the wiring works</h1>
+    <p class="sub">ESP32-C6-Pico → 4-channel opto relay board → Fan + Light 1/2/3, with the OLED and the MP3 module.
+      Flip a channel: the dashes are current, the faded parts are dead.</p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Wiring views">
+    <button class="tab" role="tab" aria-selected="true" data-tab="control">1 · Control side — 3.3 V / 5 V</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="mains">2 · Mains side — 230 V</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="audio">3 · Display &amp; audio</button>
+  </div>
+
+  <div class="bar">
+    <button class="chbtn" data-ch="0" aria-pressed="false">
+      <span class="led"></span>
+      <span><b>CH 1 · D0</b><small>IN1 → Fan</small></span>
+      <span class="sw"><i></i></span>
+    </button>
+    <button class="chbtn" data-ch="1" aria-pressed="false">
+      <span class="led"></span>
+      <span><b>CH 2 · D1</b><small>IN2 → Light 1</small></span>
+      <span class="sw"><i></i></span>
+    </button>
+    <button class="chbtn" data-ch="2" aria-pressed="false">
+      <span class="led"></span>
+      <span><b>CH 3 · D2</b><small>IN3 → Light 2</small></span>
+      <span class="sw"><i></i></span>
+    </button>
+    <button class="chbtn" data-ch="3" aria-pressed="false">
+      <span class="led"></span>
+      <span><b>CH 4 · D3</b><small>IN4 → Light 3</small></span>
+      <span class="sw"><i></i></span>
+    </button>
+    <button class="ghost" id="alloff">All off</button>
+    <button class="ghost" id="demo">Auto demo</button>
+  </div>
+
+  <div class="narr" id="narr" aria-live="polite">
+    Pick a channel above, or press <b>Auto demo</b>. Watch the low-voltage side here, then open the mains tab.
+  </div>
+
+  <section class="scene active" id="scene-control" role="tabpanel" aria-label="Control side">
+    <div data-svg="control"></div>
+    <div class="cards">
+      <div class="card"><h4>Active LOW</h4><p>The ESP32 <b>pulls the input low</b> (sinks a few mA) to energise a relay. 3.3 V on the pin means off.</p></div>
+      <div class="card"><h4>4 × 10 kΩ pull-ups</h4><p>Each <code>IN</code> also has 10 kΩ to 3V3 (one is drawn in grey above). That holds the inputs high while the ESP32 resets, so no relay clicks on boot.</p></div>
+      <div class="card"><h4>Jumper removed</h4><p><code>VCC</code> stays on 3V3 (opto side). <code>JD-VCC</code> comes from the 5 V supply, so the opto LED sees a true 0 V when the pin goes low. GND stays shared.</p></div>
+      <div class="card"><h4>~72 mA per coil</h4><p>Four coils ≈ 290 mA. The 1 A adapter also runs the DFPlayer, which is why the coils do not hang off the ESP32's 3V3.</p></div>
+    </div>
+  </section>
+
+  <section class="scene" id="scene-mains" role="tabpanel" aria-label="Mains side">
+    <div data-svg="mains"></div>
+    <div class="cards">
+      <div class="card warn"><h4>Only L is switched</h4><p>Live runs L → 10 A fuse → <code>COM</code>, and <code>NO</code> → load. Neutral is common to every load and never passes through a relay.</p></div>
+      <div class="card"><h4>One fuse for the board</h4><p>The 10 A fuse sits before the COM chain, so a short in any channel takes the whole board down instead of the house.</p></div>
+      <div class="card"><h4>Inductive loads</h4><p>A fan arcs across the contacts when it opens. Fit an RC snubber / MOV across COM–NO and derate the 10 A contact rating.</p></div>
+      <div class="card warn"><h4>Separation</h4><p>Mains lives in one compartment, ESP32 + 5 V in another. PE bonds the metal enclosure (Class I loads only). Never on a breadboard.</p></div>
+    </div>
+  </section>
+
+  <section class="scene" id="scene-audio" role="tabpanel" aria-label="Display and audio">
+    <div data-svg="audio"></div>
+    <div class="cards">
+      <div class="card"><h4>OLED: 4 wires</h4><p><code>VCC</code> on <b>3V3</b> (not 5 V), <code>SDA</code> GP22, <code>SCL</code> GP23. SH1106 at 0x3C, sharing the bus with the onboard 0x20 expander. 100 kHz is deliberate.</p></div>
+      <div class="card"><h4>MP3-TF-16P</h4><p>RX ← D18 through 1 kΩ (fine without it at 9600 baud and a short wire), TX → GP19, BUSY → GP21 (low while a clip plays).</p></div>
+      <div class="card"><h4>SD card is mandatory</h4><p>FAT32, 32 GB max, clips as <code>/mp3/0001.mp3 … 0057.mp3</code>. The firmware is useless for announcements without it.</p></div>
+      <div class="card"><h4>Speaker</h4><p><code>SPK1</code>/<code>SPK2</code> → 8 Ω 0.5 W. Power the module from the same 5 V rail as JD-VCC, never from 3V3.</p></div>
+    </div>
+  </section>
+
+  <div class="legend">
+    <span><i style="background:#e08b34"></i>230 V live</span>
+    <span><i style="background:#3b82f6"></i>neutral</span>
+    <span><i style="background:#22c55e"></i>earth</span>
+    <span><i style="background:#2dd4bf"></i>3.3 V</span>
+    <span><i style="background:#fbbf24"></i>5 V</span>
+    <span><i style="background:#a78bfa"></i>signal</span>
+    <span><i style="background:#8899aa"></i>ground</span>
+    <span><i style="background:#f472b6"></i>speaker</span>
+  </div>
+</div>
+
+<style>
+#fanctl-wiring{
+  --bg:#0a0e13; --ink:#e6edf3; --muted:#8b9bab;
+  --live:#e08b34; --neutral:#3b82f6; --pe:#22c55e; --v3:#2dd4bf; --v5:#fbbf24;
+  --sig:#a78bfa; --gnd:#8899aa;
+  background:var(--bg); color:var(--ink); border-radius:16px; padding:18px;
+  font:14px/1.5 system-ui,"Segoe UI",Roboto,Ubuntu,sans-serif;
+  max-width:1360px; margin:0 auto;
+}
+#fanctl-wiring *{box-sizing:border-box}
+#fanctl-wiring .kicker{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#7d8fa1}
+#fanctl-wiring h1{font-size:21px;margin:3px 0 4px;font-weight:650;letter-spacing:-.01em}
+#fanctl-wiring .sub{margin:0 0 14px;color:var(--muted);font-size:13px;max-width:900px}
+#fanctl-wiring .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+#fanctl-wiring .tab{background:#121c26;border:1px solid #24333f;color:#b6c2cf;padding:8px 13px;border-radius:9px;cursor:pointer;font:inherit;font-size:12.5px;transition:.15s}
+#fanctl-wiring .tab:hover{background:#17232e}
+#fanctl-wiring .tab[aria-selected="true"]{background:#1a2836;border-color:#3b82f6;color:#fff;box-shadow:inset 0 0 0 1px rgba(59,130,246,.35)}
+#fanctl-wiring .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+#fanctl-wiring .chbtn{display:flex;align-items:center;gap:9px;background:#121c26;border:1px solid #24333f;color:#c8d5e2;border-radius:10px;padding:6px 10px;cursor:pointer;font:inherit;transition:.15s}
+#fanctl-wiring .chbtn:hover{background:#16222d}
+#fanctl-wiring .chbtn[aria-pressed="true"]{border-color:#f0a04a;background:#1d1a13}
+#fanctl-wiring .chbtn .led{width:9px;height:9px;border-radius:50%;background:#33414f;transition:.2s;flex:none}
+#fanctl-wiring .chbtn[aria-pressed="true"] .led{background:#ffc06a;box-shadow:0 0 9px #ffc06a}
+#fanctl-wiring .chbtn b{display:block;font-size:12.5px;font-weight:600}
+#fanctl-wiring .chbtn small{display:block;font-size:11px;color:#8b9bab}
+#fanctl-wiring .chbtn .sw{width:30px;height:16px;border-radius:9px;background:#22303d;position:relative;margin-left:4px;transition:.18s;flex:none}
+#fanctl-wiring .chbtn .sw i{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#6d7f92;transition:.18s}
+#fanctl-wiring .chbtn[aria-pressed="true"] .sw{background:#7a4a14}
+#fanctl-wiring .chbtn[aria-pressed="true"] .sw i{left:16px;background:#ffc06a}
+#fanctl-wiring .ghost{background:transparent;border:1px solid #2a3947;color:#9fb0c0;border-radius:9px;padding:7px 12px;cursor:pointer;font:inherit;font-size:12px}
+#fanctl-wiring .ghost:hover{background:#121c26;color:#e6edf3}
+#fanctl-wiring .narr{border-left:3px solid #3b82f6;background:#0f1822;padding:9px 13px;border-radius:0 9px 9px 0;font-size:12.5px;color:#c3d0dc;margin:0 0 12px;min-height:42px}
+#fanctl-wiring .narr b{color:#fff}
+#fanctl-wiring .scene{display:none}
+#fanctl-wiring .scene.active{display:block}
+#fanctl-wiring svg{width:100%;height:auto;display:block;background:#0b1219;border:1px solid #1b2733;border-radius:13px}
+#fanctl-wiring .legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:12px 0 0;font-size:11.5px;color:#8b9bab}
+#fanctl-wiring .legend span{display:flex;align-items:center;gap:6px}
+#fanctl-wiring .legend i{width:16px;height:3px;border-radius:2px;display:inline-block}
+#fanctl-wiring .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin-top:10px}
+#fanctl-wiring .card{background:#0f1822;border:1px solid #1e2a36;border-radius:10px;padding:9px 12px}
+#fanctl-wiring .card h4{margin:0 0 3px;font-size:12.5px;font-weight:650;color:#dfe8f1}
+#fanctl-wiring .card p{margin:0;font-size:11.8px;color:#93a4b5;line-height:1.45}
+#fanctl-wiring .card.warn{border-color:#4a241f}
+#fanctl-wiring .card.warn h4{color:#ffb4a8}
+#fanctl-wiring code{background:#1a2530;border-radius:4px;padding:0 4px;font-size:11px;color:#cfe3f5}
+#fanctl-wiring svg text{font-family:system-ui,"Segoe UI",Roboto,sans-serif}
+#fanctl-wiring .wire{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#fanctl-wiring .wire.live{stroke:var(--live)}
+#fanctl-wiring .wire.neutral{stroke:var(--neutral)}
+#fanctl-wiring .wire.pe{stroke:var(--pe)}
+#fanctl-wiring .wire.v3{stroke:var(--v3)}
+#fanctl-wiring .wire.v5{stroke:var(--v5)}
+#fanctl-wiring .wire.sig{stroke:var(--sig)}
+#fanctl-wiring .wire.gnd{stroke:var(--gnd)}
+#fanctl-wiring .wire.spk{stroke:#f472b6}
+#fanctl-wiring .wire.snub{stroke:#b4661f;stroke-width:1.4}
+#fanctl-wiring .flow{fill:none;stroke:#fff;stroke-width:3;stroke-dasharray:2 12;stroke-linecap:round;opacity:0;transition:opacity .25s;animation:fcflow .85s linear infinite}
+#fanctl-wiring .on .flow{opacity:.9}
+@keyframes fcflow{to{stroke-dashoffset:-28}}
+#fanctl-wiring .cch .flow.a{transition-delay:0s}
+#fanctl-wiring .cch .flow.b{transition-delay:.12s}
+#fanctl-wiring .cch .led,#fanctl-wiring .cch .ledbar{transition-delay:.2s}
+#fanctl-wiring .cch .pt{transition-delay:.24s}
+#fanctl-wiring .cch .coil,#fanctl-wiring .cch .coiltxt{transition-delay:.28s}
+#fanctl-wiring .cch .link{transition-delay:.32s}
+#fanctl-wiring .cch .lever-g{transition-delay:.36s}
+#fanctl-wiring .cch .mtag,#fanctl-wiring .cch .mtagtxt,#fanctl-wiring .cch .mtagsub{transition-delay:.44s}
+#fanctl-wiring .mch .lever-g{transition-delay:0s}
+#fanctl-wiring .mch .flow{transition-delay:.16s}
+#fanctl-wiring .mch .loadcard,#fanctl-wiring .mch .ldname{transition-delay:.26s}
+#fanctl-wiring .board{fill:#101a24;stroke:#223343;stroke-width:1.5}
+#fanctl-wiring .pad{fill:#22303d;stroke:#42566a;stroke-width:1}
+#fanctl-wiring .pad.tin{fill:#2a2b3c;stroke:#5b5f80}
+#fanctl-wiring .pad.livepad{fill:#3a2418;stroke:#a75f22}
+#fanctl-wiring .pad.pepad{fill:#15301f;stroke:#2f7a4a}
+#fanctl-wiring .dot{fill:#cbd7e3}
+#fanctl-wiring .dot2{fill:#8aa0b4}
+#fanctl-wiring .term{fill:#93a8bb}
+#fanctl-wiring .on .term{fill:#fbbf24}
+#fanctl-wiring .hdr{font-size:18px;font-weight:650;fill:#e6edf3}
+#fanctl-wiring .pin{font-family:ui-monospace,Consolas,monospace;font-size:15px;fill:#cbd7e3}
+#fanctl-wiring .cap{font-size:13.5px;fill:#8b9bab}
+#fanctl-wiring .cap.v3t{fill:#2dd4bf}
+#fanctl-wiring .cap.v5t{fill:#fbbf24}
+#fanctl-wiring .ldname{font-size:16px;font-weight:600;fill:#dfe8f1}
+#fanctl-wiring .danger{font-size:14px;fill:#f87171;font-weight:600}
+#fanctl-wiring .opto{fill:#0d1721;stroke:#2b3d4f;stroke-width:1.2}
+#fanctl-wiring .barrier{fill:none;stroke:#3b4d60;stroke-width:1.2;stroke-dasharray:3 3}
+#fanctl-wiring .led{fill:#5a6b7c;transition:fill .15s,filter .15s}
+#fanctl-wiring .on .led{fill:#ff8a7a;filter:drop-shadow(0 0 6px rgba(255,120,100,.85))}
+#fanctl-wiring .ledbar{fill:none;stroke:#8aa0b4;stroke-width:2;transition:stroke .15s}
+#fanctl-wiring .on .ledbar{stroke:#ffb4a8}
+#fanctl-wiring .pt{fill:none;stroke:#8298ac;stroke-width:2;stroke-linecap:round;transition:stroke .15s}
+#fanctl-wiring .on .pt{stroke:#2dd4bf;filter:drop-shadow(0 0 4px rgba(45,212,191,.7))}
+#fanctl-wiring .relaybox{fill:#0e1721;stroke:#2b3d4f;stroke-width:1.2}
+#fanctl-wiring .coil{fill:#1b2733;stroke:#3b4d60;stroke-width:1.2;transition:fill .2s,stroke .2s,filter .2s}
+#fanctl-wiring .on .coil{fill:#3a2a12;stroke:#fbbf24;filter:drop-shadow(0 0 5px rgba(251,191,36,.5))}
+#fanctl-wiring .coiltxt{font-size:14px;fill:#f0b45a;transition:fill .2s}
+#fanctl-wiring .link{fill:none;stroke:#46586a;stroke-width:1.4;stroke-dasharray:3 4;transition:stroke .2s}
+#fanctl-wiring .on .link{stroke:#fbbf24}
+#fanctl-wiring .lever{fill:none;stroke:#a8bccf;stroke-width:3.4;stroke-linecap:round;transition:stroke .2s}
+#fanctl-wiring .on .lever{stroke:#fbbf24}
+#fanctl-wiring .lever-g{transform-box:view-box;transition:transform .18s cubic-bezier(.3,.9,.4,1.3)}
+#fanctl-wiring .lever-g.s1{transform:rotate(-35deg)}
+#fanctl-wiring .on .lever-g.s1{transform:rotate(0deg)}
+#fanctl-wiring .lever-g.s2{transform:rotate(-18deg)}
+#fanctl-wiring .on .lever-g.s2{transform:rotate(0deg)}
+#fanctl-wiring .hop{fill:none;stroke:#6d7f92;stroke-width:1.5;stroke-dasharray:3 4}
+#fanctl-wiring .mtag{fill:#1b232c;stroke:#6a2b26;stroke-width:1.2;transition:fill .2s,stroke .2s}
+#fanctl-wiring .on .mtag{fill:#3a1512;stroke:#f87171}
+#fanctl-wiring .mtagtxt{font-size:13.5px;fill:#c8d5e2;transition:fill .2s}
+#fanctl-wiring .on .mtagtxt{fill:#ffb4a8}
+#fanctl-wiring .mtagsub{font-size:11.5px;fill:#8b9bab;transition:fill .2s}
+#fanctl-wiring .on .mtagsub{fill:#f0a89c}
+#fanctl-wiring .res{fill:#22303d;stroke:#42566a;stroke-width:1.1}
+#fanctl-wiring .fuse{fill:#1c2836;stroke:#b4661f;stroke-width:1.5}
+#fanctl-wiring .mainsbox{fill:#120f0e;stroke:#4a2a22;stroke-width:1.5;stroke-dasharray:6 5}
+#fanctl-wiring .loadcard{fill:#131c25;stroke:#2b3b4b;stroke-width:1.2;transition:stroke .25s,fill .25s}
+#fanctl-wiring .on .loadcard{stroke:#9a6229;fill:#161b20}
+#fanctl-wiring .fanring{fill:none;stroke:#3c4e60;stroke-width:1.4}
+#fanctl-wiring .fan-blades ellipse{fill:#6b8094;transition:fill .25s}
+#fanctl-wiring .on .fan-blades ellipse{fill:#f0a04a}
+#fanctl-wiring .fan-blades{transform-box:fill-box;transform-origin:center}
+#fanctl-wiring .on .fan-blades{animation:fcspin 1.05s linear infinite}
+@keyframes fcspin{to{transform:rotate(360deg)}}
+#fanctl-wiring .fanhub{fill:#2b3a48}
+#fanctl-wiring .bulb{fill:#1b2733;stroke:#5b7086;stroke-width:1.6;transition:fill .25s,stroke .25s}
+#fanctl-wiring .on .bulb{fill:#ffd166;stroke:#ffb703}
+#fanctl-wiring .halo{fill:#ffd166;opacity:0;transition:opacity .3s}
+#fanctl-wiring .on .halo{opacity:.2}
+#fanctl-wiring .base{fill:#48596b}
+#fanctl-wiring .fil{fill:none;stroke:#7d8fa1;stroke-width:1.6;transition:stroke .25s}
+#fanctl-wiring .on .fil{stroke:#8a5200}
+#fanctl-wiring .kpill{fill:#101a24;stroke:#33465a;stroke-width:1.2}
+#fanctl-wiring .kpilltxt{font-size:13px;fill:#b6c6d6}
+#fanctl-wiring .spkbody{fill:#2a2230;stroke:#f472b6;stroke-width:1.4}
+#fanctl-wiring .spktext{font-size:13px;fill:#f6c6e0}
+#fanctl-wiring .capbar{stroke:#b4661f;stroke-width:2;fill:none}
+#fanctl-wiring .chbtn:focus-visible,#fanctl-wiring .tab:focus-visible,#fanctl-wiring .ghost:focus-visible{outline:2px solid #3b82f6;outline-offset:2px}
+</style>
+
+<script>
+(function(){
+  const CH = [
+    {pin:'D0', gpio:'GP0', load:'Fan',     sub:'fan · snubber', icon:'fan'},
+    {pin:'D1', gpio:'GP1', load:'Light 1', sub:'230 V · 10 A', icon:'bulb'},
+    {pin:'D2', gpio:'GP2', load:'Light 2', sub:'230 V · 10 A', icon:'bulb'},
+    {pin:'D3', gpio:'GP3', load:'Light 3', sub:'230 V · 10 A', icon:'bulb'}
+  ];
+  const rowY = [150, 228, 306, 384];
+  const mainsY = [160, 268, 376, 484];
+
+  function controlRow(c, i){
+    const y = rowY[i];
+    return '<g class="cch" data-ch="' + i + '">'
+      + '<rect class="pad" x="300" y="' + (y-8) + '" width="16" height="16" rx="3"/>'
+      + '<text class="pin" x="292" y="' + (y+5) + '" text-anchor="end">' + c.pin + ' · ' + c.gpio + '</text>'
+
+      + '<path class="wire sig" d="M316 ' + y + ' H452"/>'
+      + '<path class="flow a" d="M316 ' + y + ' H452"/>'
+
+      + '<rect class="pad tin" x="394" y="' + (y-8) + '" width="14" height="16" rx="3"/>'
+      + '<text class="pin" x="398" y="' + (y-12) + '">IN' + (i+1) + '</text>'
+
+      + '<rect class="opto" x="452" y="' + (y-24) + '" width="104" height="48" rx="8"/>'
+      + '<path class="barrier" d="M504 ' + (y-19) + ' V' + (y+19) + '"/>'
+      + '<path class="led" d="M466 ' + (y-8) + ' L482 ' + y + ' L466 ' + (y+8) + ' Z"/>'
+      + '<path class="ledbar" d="M483 ' + (y-9) + ' V' + (y+9) + '"/>'
+      + '<path class="pt" d="M516 ' + (y-9) + ' V' + (y+9) + ' M516 ' + (y-5) + ' L534 ' + (y-12) + ' M516 ' + (y+5) + ' L534 ' + (y+12) + ' M534 ' + (y-12) + ' V' + (y+12) + '"/>'
+
+      + '<path class="wire sig" d="M556 ' + y + ' H596"/>'
+      + '<path class="flow b" d="M556 ' + y + ' H596"/>'
+
+      + '<rect class="relaybox" x="596" y="' + (y-26) + '" width="204" height="52" rx="9"/>'
+      + '<rect class="coil" x="606" y="' + (y-13) + '" width="60" height="26" rx="5"/>'
+      + '<text class="coiltxt" x="636" y="' + (y+4) + '" text-anchor="middle">K' + (i+1) + '</text>'
+      + '<path class="link" d="M668 ' + y + ' L694 ' + (y-9) + '"/>'
+      + '<circle class="dot2" cx="700" cy="' + (y-10) + '" r="3"/>'
+      + '<circle class="dot2" cx="752" cy="' + (y-10) + '" r="3"/>'
+      + '<g class="lever-g s2" style="transform-origin:700px ' + (y-10) + 'px">'
+      +   '<path class="lever" d="M702 ' + (y-10) + ' H750"/>'
+      + '</g>'
+      + '<text class="cap" x="700" y="' + (y+19) + '" text-anchor="middle">COM</text>'
+      + '<text class="cap" x="752" y="' + (y+19) + '" text-anchor="middle">NO</text>'
+
+      + '<path class="hop" d="M800 ' + (y-10) + ' H828"/>'
+      + '<rect class="mtag" x="828" y="' + (y-22) + '" width="132" height="34" rx="8"/>'
+      + '<text class="mtagtxt" x="894" y="' + (y-4) + '" text-anchor="middle">COM / NO</text>'
+      + '<text class="mtagsub" x="894" y="' + (y+11) + '" text-anchor="middle">230 V side</text>'
+      + '</g>';
+  }
+
+  function controlSvg(){
+    return '<svg viewBox="0 0 1060 700" role="img" aria-label="Control side: ESP32 pins to relay inputs, 3.3 V and 5 V supplies">'
+      + '<rect class="board" x="40" y="60" width="260" height="480" rx="14"/>'
+      + '<text class="hdr" x="170" y="94" text-anchor="middle">ESP32-C6-Pico</text>'
+      + '<text class="cap" x="170" y="114" text-anchor="middle">only the pins this build uses</text>'
+      + '<text class="cap" x="170" y="522" text-anchor="middle">USB-C 5 V in · 3V3 out</text>'
+
+      + '<rect class="board" x="400" y="60" width="580" height="380" rx="14"/>'
+      + '<text class="hdr" x="690" y="92" text-anchor="middle">4-channel opto relay board</text>'
+      + '<text class="cap" x="690" y="112" text-anchor="middle">active LOW · VCC–JD-VCC jumper removed · 10 A contacts</text>'
+
+      + CH.map(controlRow).join('')
+
+      + '<rect class="pad" x="300" y="472" width="16" height="16" rx="3"/>'
+      + '<text class="pin" x="292" y="484" text-anchor="end">3V3</text>'
+      + '<rect class="pad" x="300" y="502" width="16" height="16" rx="3"/>'
+      + '<text class="pin" x="292" y="514" text-anchor="end">GND</text>'
+
+      + '<rect class="pad" x="512" y="432" width="16" height="16" rx="3"/>'
+      + '<text class="pin" x="520" y="424" text-anchor="middle">VCC</text>'
+      + '<rect class="pad" x="572" y="432" width="16" height="16" rx="3"/>'
+      + '<text class="pin" x="580" y="424" text-anchor="middle">GND</text>'
+      + '<rect class="pad" x="692" y="432" width="16" height="16" rx="3"/>'
+      + '<text class="pin" x="700" y="424" text-anchor="middle">JD-VCC</text>'
+      + '<text class="cap" x="980" y="424" text-anchor="end">→ loads (Mains tab)</text>'
+
+      + '<path class="wire v3" d="M316 480 H520 V448"/>'
+      + '<path class="wire gnd" d="M316 510 H580 V448"/>'
+      + '<path class="wire v5" d="M760 545 H700 V448"/>'
+      + '<path class="wire gnd" d="M760 585 H350 V510"/>'
+      + '<circle class="dot" cx="350" cy="510" r="3.5"/>'
+
+      + '<text class="cap v3t" x="330" y="470">3V3 → VCC (opto side)</text>'
+      
+      + '<text class="cap v5t" x="696" y="532" text-anchor="end">+5 V → JD-VCC</text>'
+      + '<text class="cap" x="330" y="606">shared ground: ESP32 · relay board · 5 V adapter</text>'
+
+      + '<rect class="board" x="760" y="520" width="260" height="90" rx="12"/>'
+      + '<rect class="pad" x="752" y="537" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="752" y="577" width="16" height="16" rx="3"/>'
+      + '<text class="pin" x="776" y="550">+5 V</text>'
+      + '<text class="pin" x="776" y="590">GND</text>'
+      + '<text class="hdr" x="900" y="558" text-anchor="middle" font-size="15">5 V 1 A supply</text>'
+      + '<text class="cap" x="900" y="578" text-anchor="middle">coils (JD-VCC) + DFPlayer</text>'
+      + '<text class="cap" x="900" y="596" text-anchor="middle">coils ≈ 290 mA total</text>'
+
+      + '<path class="wire v3" d="M370 112 V150"/>'
+      + '<rect class="res" x="363" y="114" width="14" height="28" rx="3"/>'
+      + '<text class="cap" x="370" y="172" text-anchor="middle">10 kΩ</text>'
+      + '<text class="cap" x="370" y="104" text-anchor="middle" fill="#2dd4bf">3V3</text>'
+      + '<circle class="dot" cx="370" cy="150" r="3.5"/>'
+      + '</svg>';
+  }
+
+  function fanIcon(y){
+    return '<g class="fan" transform="translate(727 ' + y + ')">'
+      + '<circle class="fanring" r="25"/>'
+      + '<g class="fan-blades">'
+      +   '<ellipse cx="0" cy="-10" rx="5.5" ry="9.5"/>'
+      +   '<ellipse cx="0" cy="-10" rx="5.5" ry="9.5" transform="rotate(90)"/>'
+      +   '<ellipse cx="0" cy="-10" rx="5.5" ry="9.5" transform="rotate(180)"/>'
+      +   '<ellipse cx="0" cy="-10" rx="5.5" ry="9.5" transform="rotate(270)"/>'
+      + '</g>'
+      + '<circle class="fanhub" r="4"/>'
+      + '</g>';
+  }
+
+  function bulbIcon(y){
+    return '<g class="bulbg" transform="translate(727 ' + y + ')">'
+      + '<circle class="halo" r="30"/>'
+      + '<circle class="bulb" cy="-3" r="16"/>'
+      + '<rect class="base" x="-8" y="13" width="16" height="10" rx="2"/>'
+      + '<path class="fil" d="M-6 4 L-3 -5 L0 4 L3 -5 L6 4"/>'
+      + '</g>';
+  }
+
+  function snubber(y){
+    const sy = y + 54;
+    return '<path class="wire snub" d="M470 ' + (y+7) + ' V' + sy + ' H558 V' + (y+7) + '"/>'
+      + '<rect class="res" x="492" y="' + (sy-6) + '" width="16" height="12" rx="2"/>'
+      + '<path class="capbar" d="M520 ' + (sy-8) + ' V' + (sy+8) + ' M528 ' + (sy-8) + ' V' + (sy+8) + '"/>'
+      + '<text class="cap" x="566" y="' + (sy+4) + '">RC snubber on the fan</text>';
+  }
+
+  function mainsRow(c, i){
+    const y = mainsY[i];
+    const icon = c.icon === 'fan' ? fanIcon(y) : bulbIcon(y);
+    return '<g class="mch" data-ch="' + i + '">'
+      + '<text class="cap" x="86" y="' + (y-12) + '">CH ' + (i+1) + '</text>'
+      + '<text class="cap" x="86" y="' + (y+18) + '">' + c.pin + ' → IN' + (i+1) + '</text>'
+      + (i < 3 ? '<circle class="dot" cx="70" cy="' + y + '" r="4"/>' : '')
+      + '<path class="wire live" d="M70 ' + y + ' H470"/>'
+      + '<path class="flow" d="M70 ' + y + ' H470"/>'
+
+      + '<circle class="term" cx="470" cy="' + y + '" r="4.5"/>'
+      + '<g class="lever-g s1" style="transform-origin:470px ' + y + 'px">'
+      +   '<path class="lever" d="M474 ' + y + ' L552 ' + y + '"/>'
+      + '</g>'
+      + '<circle class="term" cx="558" cy="' + y + '" r="4.5"/>'
+
+      + '<rect class="kpill" x="356" y="' + (y-46) + '" width="96" height="26" rx="7"/>'
+      + '<text class="kpilltxt" x="404" y="' + (y-28) + '" text-anchor="middle">K' + (i+1) + ' · CH' + (i+1) + '</text>'
+      + '<path class="link" d="M452 ' + (y-33) + ' Q492 ' + (y-30) + ' 505 ' + (y-8) + '"/>'
+
+      + (i === 0 ? snubber(y) : '')
+
+      + '<path class="wire live" d="M558 ' + y + ' H690"/>'
+      + '<path class="flow" d="M558 ' + y + ' H690"/>'
+      + '<rect class="loadcard" x="690" y="' + (y-38) + '" width="180" height="76" rx="10"/>'
+      + icon
+      + '<text class="ldname" x="762" y="' + (y-2) + '">' + c.load + '</text>'
+      + '<text class="cap" x="762" y="' + (y+15) + '">' + c.sub + '</text>'
+      + '<path class="wire neutral" d="M870 ' + y + ' H1040"/>'
+      + '<path class="flow" d="M870 ' + y + ' H1040"/>'
+      + (i >= 1 ? '<circle class="dot" cx="1040" cy="' + y + '" r="4"/>' : '')
+      + '</g>';
+  }
+
+  function mainsSvg(){
+    return '<svg viewBox="0 0 1120 660" role="img" aria-label="Mains side: fuse, relay contacts, loads and neutral return">'
+      + '<rect class="mainsbox" x="24" y="24" width="1072" height="600" rx="16"/>'
+      + '<text class="danger" x="46" y="52">230 V AC — unplug before touching · every contact switches L only</text>'
+
+      + '<rect class="pad livepad" x="62" y="66" width="16" height="16" rx="3"/>'
+      + '<text class="pin" x="52" y="79" text-anchor="end">L</text>'
+      + '<path class="wire live" d="M70 82 V136"/>'
+      + '<rect class="fuse" x="58" y="92" width="24" height="44" rx="5"/>'
+      + '<path class="wire live" d="M70 100 V128" opacity=".55"/>'
+      + '<text class="cap" x="92" y="108">10 A fuse</text>'
+      + '<text class="cap" x="92" y="124">whole board</text>'
+      + '<path class="wire live" d="M70 136 V484"/>'
+
+      + CH.map(mainsRow).join('')
+
+      + '<path class="wire neutral" d="M1040 160 V560"/>'
+      + '<rect class="pad" x="1032" y="560" width="16" height="16" rx="3" fill="#1b2733" stroke="#3b82f6"/>'
+      + '<text class="pin" x="1040" y="596" text-anchor="middle">N</text>'
+      + '<text class="cap" x="1040" y="612" text-anchor="middle">incoming neutral</text>'
+
+      + '<rect class="pad pepad" x="812" y="556" width="16" height="16" rx="3"/>'
+      + '<path class="wire pe" d="M820 572 V588"/>'
+      + '<path class="wire pe" d="M808 588 H832 M812 594 H828 M816 600 H824"/>'
+      + '<text class="cap" x="846" y="572">PE → metal enclosure</text>'
+      + '<text class="cap" x="846" y="588">Class I appliances only</text>'
+      + '</svg>';
+  }
+
+  function audioSvg(){
+    return '<svg viewBox="0 0 1200 600" role="img" aria-label="Display and audio wiring">'
+      + '<rect class="board" x="40" y="60" width="280" height="490" rx="14"/>'
+      + '<text class="hdr" x="180" y="94" text-anchor="middle">ESP32-C6-Pico</text>'
+      + '<text class="cap" x="180" y="114" text-anchor="middle">same board, other pins</text>'
+      + '<text class="cap" x="180" y="532" text-anchor="middle">OLED and audio are optional</text>'
+
+      + '<text class="pin" x="312" y="174" text-anchor="end">3V3</text>'
+      + '<text class="pin" x="312" y="209" text-anchor="end">GND</text>'
+      + '<text class="pin" x="312" y="259" text-anchor="end">GP22</text>'
+      + '<text class="pin" x="312" y="299" text-anchor="end">GP23</text>'
+      + '<text class="pin" x="312" y="434" text-anchor="end">D18</text>'
+      + '<text class="pin" x="312" y="464" text-anchor="end">GP19</text>'
+      + '<text class="pin" x="312" y="494" text-anchor="end">G21</text>'
+      + '<text class="pin" x="312" y="524" text-anchor="end">GND</text>'
+      + '<rect class="pad" x="320" y="162" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="320" y="197" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="320" y="247" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="320" y="287" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="320" y="422" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="320" y="452" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="320" y="482" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="320" y="512" width="16" height="16" rx="3"/>'
+
+      + '<path class="wire v3" d="M336 170 H620"/>'
+      + '<path class="wire gnd" d="M336 205 H620"/>'
+      + '<path class="wire sig" d="M336 255 H620"/>'
+      + '<path class="wire sig" d="M336 295 H620"/>'
+
+      + '<rect class="board" x="620" y="100" width="320" height="230" rx="12"/>'
+      + '<text class="hdr" x="800" y="126" text-anchor="middle">1.3″ OLED · SH1106</text>'
+      + '<text class="cap" x="800" y="145" text-anchor="middle">4-pin module · answers at 0x3C</text>'
+      + '<rect class="pad" x="612" y="162" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="612" y="197" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="612" y="247" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="612" y="287" width="16" height="16" rx="3"/>'
+      + '<text class="pin" x="636" y="174">VCC</text>'
+      + '<text class="pin" x="636" y="209">GND</text>'
+      + '<text class="pin" x="636" y="259">SDA</text>'
+      + '<text class="pin" x="636" y="299">SCL</text>'
+      + '<text class="cap" x="800" y="216" text-anchor="middle">SDA → GP22 · SCL → GP23</text>'
+      + '<text class="cap" x="800" y="234" text-anchor="middle">100 kHz — misses ACKs faster</text>'
+      + '<text class="cap" x="800" y="252" text-anchor="middle">no RES pin — module resets itself</text>'
+      + '<text class="cap v3t" x="800" y="300" text-anchor="middle">VCC on 3V3 — never 5 V</text>'
+
+      + '<rect class="board" x="600" y="348" width="280" height="32" rx="9"/>'
+      + '<text class="cap v5t" x="740" y="369" text-anchor="middle">+5 V · same rail as JD-VCC</text>'
+      + '<path class="wire v5" d="M700 380 V390"/>'
+
+      + '<path class="wire sig" d="M336 430 H470"/>'
+      + '<rect class="res" x="470" y="422" width="44" height="16" rx="3"/>'
+      + '<text class="cap" x="492" y="414" text-anchor="middle">1 kΩ</text>'
+      + '<path class="wire sig" d="M514 430 H620"/>'
+      + '<path class="wire sig" d="M336 460 H620"/>'
+      + '<path class="wire sig" d="M336 490 H620"/>'
+      + '<path class="wire gnd" d="M336 520 H620"/>'
+
+      + '<rect class="board" x="620" y="390" width="320" height="180" rx="12"/>'
+      + '<text class="hdr" x="820" y="416" text-anchor="middle" font-size="16">MP3-TF-16P v3.0</text>'
+      + '<text class="cap" x="820" y="434" text-anchor="middle">DFPlayer Mini clone · SD card in</text>'
+      + '<rect class="pad" x="692" y="382" width="16" height="16" rx="3"/>'
+      + '<text class="pin" x="668" y="404" text-anchor="end">+5V</text>'
+      + '<rect class="pad" x="612" y="422" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="612" y="452" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="612" y="482" width="16" height="16" rx="3"/>'
+      + '<rect class="pad" x="612" y="512" width="16" height="16" rx="3"/>'
+      + '<text class="pin" x="636" y="434">RX</text>'
+      + '<text class="pin" x="636" y="464">TX</text>'
+      + '<text class="pin" x="636" y="494">BUSY</text>'
+      + '<text class="pin" x="636" y="524">GND</text>'
+      + '<text class="cap" x="800" y="530" text-anchor="middle">BUSY is LOW while a clip plays</text>'
+      + '<text class="cap" x="800" y="548" text-anchor="middle">/mp3/0001…0057.mp3 · FAT32 · ≤32 GB</text>'
+
+      + '<path class="wire spk" d="M940 424 H1020"/>'
+      + '<path class="wire spk" d="M940 454 H1020"/>'
+      + '<rect class="board" x="1020" y="400" width="160" height="100" rx="12"/>'
+      + '<rect class="pad" x="1012" y="416" width="16" height="16" rx="3" stroke="#f472b6"/>'
+      + '<rect class="pad" x="1012" y="446" width="16" height="16" rx="3" stroke="#f472b6"/>'
+      + '<path class="spkbody" d="M1038 426 L1050 426 L1066 414 L1066 466 L1050 454 L1038 454 Z"/>'
+      + '<path class="wire spk" d="M1070 424 Q1080 440 1070 456"/>'
+      + '<text class="spktext" x="1090" y="438">8 Ω</text>'
+      + '<text class="spktext" x="1090" y="454">0.5 W</text>'
+      + '<text class="cap" x="1100" y="484" text-anchor="middle">SPK1 / SPK2</text>'
+      + '</svg>';
+  }
+
+  const hosts = {
+    control: document.querySelector('#fanctl-wiring [data-svg="control"]'),
+    mains: document.querySelector('#fanctl-wiring [data-svg="mains"]'),
+    audio: document.querySelector('#fanctl-wiring [data-svg="audio"]')
+  };
+  if (!hosts.control) return;
+  hosts.control.innerHTML = controlSvg();
+  hosts.mains.innerHTML = mainsSvg();
+  hosts.audio.innerHTML = audioSvg();
+
+  const state = [false, false, false, false];
+  const narr = document.getElementById('narr');
+
+  const text = CH.map((c, i) => ({
+    on: 'CH ' + (i+1) + ' · ' + c.load + ' — ' + c.pin + ' (' + c.gpio + ') pulled LOW → IN' + (i+1)
+        + ' → opto LED lights → coil K' + (i+1) + ' pulls ≈72 mA from JD-VCC → COM–NO closes → '
+        + c.load + ' is live and the current returns on N.',
+    off: 'CH ' + (i+1) + ' · ' + c.load + ' — ' + c.pin + ' back to 3.3 V → opto off → K' + (i+1)
+        + ' releases → COM–NO opens → ' + c.load + ' loses L.'
+  }));
+
+  function render(){
+    document.querySelectorAll('#fanctl-wiring .chbtn').forEach(function(b){
+      b.setAttribute('aria-pressed', state[+b.dataset.ch] ? 'true' : 'false');
+    });
+    document.querySelectorAll('#fanctl-wiring .cch, #fanctl-wiring .mch').forEach(function(g){
+      g.classList.toggle('on', !!state[+g.dataset.ch]);
+    });
+  }
+
+  function narrate(i, on){
+    narr.innerHTML = '<b>' + (on ? 'ON' : 'OFF') + '</b> · ' + text[i][on ? 'on' : 'off'];
+  }
+
+  document.querySelectorAll('#fanctl-wiring .chbtn').forEach(function(b){
+    b.addEventListener('click', function(){
+      const i = +b.dataset.ch;
+      state[i] = !state[i];
+      render();
+      narrate(i, state[i]);
+    });
+  });
+
+  let timer = null;
+  function stopDemo(){ if (timer) { clearTimeout(timer); timer = null; } }
+
+  document.getElementById('alloff').addEventListener('click', function(){
+    stopDemo();
+    state.fill(false);
+    render();
+    narr.innerHTML = 'Everything off. Every contact is open, every load is dead — the ESP32 keeps its pins high.';
+  });
+
+  document.getElementById('demo').addEventListener('click', function(){
+    stopDemo();
+    state.fill(false);
+    render();
+    let i = 0;
+    const step = function(){
+      if (i > 0) { state[i-1] = false; }
+      if (i < 4) {
+        state[i] = true;
+        render();
+        narrate(i, true);
+        i += 1;
+        timer = setTimeout(step, 1700);
+      } else {
+        state.fill(false);
+        render();
+        narr.innerHTML = 'Demo finished. Open the <b>Mains tab</b> and flip a channel there to see the load side.';
+        timer = null;
+      }
+    };
+    step();
+  });
+
+  document.querySelectorAll('#fanctl-wiring .tab').forEach(function(t){
+    t.addEventListener('click', function(){
+      document.querySelectorAll('#fanctl-wiring .tab').forEach(function(x){
+        x.setAttribute('aria-selected', x === t ? 'true' : 'false');
+      });
+      document.querySelectorAll('#fanctl-wiring .scene').forEach(function(s){
+        s.classList.toggle('active', s.id === 'scene-' + t.dataset.tab);
+      });
+    });
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>

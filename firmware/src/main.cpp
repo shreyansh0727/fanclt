@@ -21,6 +21,7 @@
 namespace {
 
 bool mdnsStarted = false;
+String mdnsTxtId;  // device id last published in the _fanctl TXT record
 uint32_t wifiRetryAt = 0;
 uint32_t offlineSince = 0;
 uint32_t buttonPressedAt = 0;
@@ -223,12 +224,23 @@ void loop() {
     if (!mdnsStarted) {
       if (MDNS.begin(hostname().c_str())) {
         MDNS.addService("http", "tcp", LOCAL_HTTP_PORT);
+        // Google's local fulfilment scans for this service; the TXT id ties
+        // the discovered box to the controller registered in the account.
+        MDNS.addService("fanctl", "tcp", LOCAL_HTTP_PORT);
         mdnsStarted = true;
         Serial.printf("[main] mDNS: http://%s.local/\n", hostname().c_str());
       } else {
         Serial.println("[main] mDNS failed to start");
         mdnsStarted = true;  // do not spam retries
       }
+    }
+    if (mdnsStarted && store::isClaimed() && mdnsTxtId != store::deviceId()) {
+      // The board can be claimed while it is already running, so publish the
+      // id as soon as it exists instead of waiting for the next reboot.
+      MDNS.addServiceTxt("fanctl", "tcp", "id", store::deviceId());
+      MDNS.addServiceTxt("fanctl", "tcp", "model", DEVICE_MODEL);
+      mdnsTxtId = store::deviceId();
+      Serial.printf("[main] mDNS fanctl id: %s\n", mdnsTxtId.c_str());
     }
   } else {
     if (offlineSince == 0) offlineSince = millis();

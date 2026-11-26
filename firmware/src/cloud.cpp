@@ -497,6 +497,21 @@ void handleCommand(const String& id, JsonObjectConst command) {
     return;
   }
 
+  // The backend rotates this credential for the voice-assistant local app;
+  // it is not a relay command, so nothing else here changes.
+  if (action == "set_assistant_key") {
+    String key = command["key"] | "";
+    key.trim();
+    if (key.length() < 16) {
+      sendAck(id, false, "bad_key");
+      return;
+    }
+    store::saveAssistantKey(key);
+    Serial.println("[cloud] assistant LAN key stored");
+    sendAck(id, true, nullptr);
+    return;
+  }
+
   // Any other reaction replaces the latched alarm scene, so drop the siren with
   // it and let the app hide its Stop button.
   const bool otherReaction = action == "pet" || action == "feed" || action == "play" ||

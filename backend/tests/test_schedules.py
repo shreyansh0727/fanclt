@@ -87,7 +87,7 @@ def test_schedule_requires_owned_device(client, ctx):
                 "timezone": "UTC",
                 "action": {"type": "set_all", "on": True},
             },
-            headers={"Authorization": "Bearer token-b"},
+            headers={"Authorization": "Bearer test-token-b"},
         )
         assert response.status_code == 403
 

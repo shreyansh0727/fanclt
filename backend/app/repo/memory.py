@@ -1,8 +1,10 @@
 import copy
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..timeutil import aware
+
+_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
 
 class MemoryRepo:
@@ -13,6 +15,10 @@ class MemoryRepo:
         self.schedules: dict[str, dict] = {}
         self.events: list[dict] = []
         self.release: dict | None = None
+        self.oauth_clients: dict[str, dict] = {}
+        self.auth_codes: dict[str, dict] = {}
+        self.links: dict[str, dict] = {}
+        self.assistant_commands: dict[str, dict] = {}
 
     # devices ---------------------------------------------------------------
     async def create_device(self, doc: dict) -> dict:
@@ -102,3 +108,70 @@ class MemoryRepo:
     # releases --------------------------------------------------------------
     async def get_release(self) -> dict | None:
         return copy.deepcopy(self.release) if self.release else None
+
+    # oauth clients + auth codes -------------------------------------------
+    async def create_oauth_client(self, doc: dict) -> dict:
+        doc = copy.deepcopy(doc)
+        self.oauth_clients[doc["id"]] = doc
+        return copy.deepcopy(doc)
+
+    async def get_oauth_client(self, client_id: str) -> dict | None:
+        doc = self.oauth_clients.get(client_id)
+        return copy.deepcopy(doc) if doc else None
+
+    async def create_auth_code(self, doc: dict) -> dict:
+        doc = copy.deepcopy(doc)
+        self.auth_codes[doc["id"]] = doc
+        return copy.deepcopy(doc)
+
+    async def get_auth_code(self, code_hash: str) -> dict | None:
+        doc = self.auth_codes.get(code_hash)
+        return copy.deepcopy(doc) if doc else None
+
+    async def update_auth_code(self, code_hash: str, patch: dict) -> dict | None:
+        doc = self.auth_codes.get(code_hash)
+        if not doc:
+            return None
+        doc.update(copy.deepcopy(patch))
+        return copy.deepcopy(doc)
+
+    # assistant links ------------------------------------------------------
+    async def create_link(self, doc: dict) -> dict:
+        doc = copy.deepcopy(doc)
+        self.links[doc["id"]] = doc
+        return copy.deepcopy(doc)
+
+    async def get_link(self, link_id: str) -> dict | None:
+        doc = self.links.get(link_id)
+        return copy.deepcopy(doc) if doc else None
+
+    async def update_link(self, link_id: str, patch: dict) -> dict | None:
+        doc = self.links.get(link_id)
+        if not doc:
+            return None
+        doc.update(copy.deepcopy(patch))
+        return copy.deepcopy(doc)
+
+    async def get_link_by_hash(self, field: str, value: str) -> dict | None:
+        if field not in ("access_hash", "refresh_hash"):
+            raise ValueError(f"unsupported link lookup field: {field}")
+        for doc in self.links.values():
+            if doc.get(field) == value:
+                return copy.deepcopy(doc)
+        return None
+
+    async def list_links(self, owner_id: str) -> list[dict]:
+        rows = [copy.deepcopy(link) for link in self.links.values() if link.get("owner_id") == owner_id]
+        rows.sort(key=lambda link: aware(link.get("created_at")) or _EPOCH, reverse=True)
+        return rows
+
+    async def delete_link(self, link_id: str) -> None:
+        self.links.pop(link_id, None)
+
+    # assistant command idempotency ----------------------------------------
+    async def get_assistant_command(self, key: str) -> dict | None:
+        doc = self.assistant_commands.get(key)
+        return copy.deepcopy(doc) if doc else None
+
+    async def save_assistant_command(self, doc: dict) -> None:
+        self.assistant_commands[doc["id"]] = copy.deepcopy(doc)

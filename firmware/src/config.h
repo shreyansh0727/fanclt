@@ -3,8 +3,8 @@
 // ---------------------------------------------------------------------------
 // Identity
 // ---------------------------------------------------------------------------
-#define FW_VERSION "1.1.3"
-#define DEVICE_MODEL "fanctl-8"
+#define FW_VERSION "1.2.0"
+#define DEVICE_MODEL "fanctl-4"  // 4-relay build; see RELAY_COUNT below
 
 // ---------------------------------------------------------------------------
 // Relay wiring
@@ -27,8 +27,12 @@
 //   4, 5, 15    -> boot straps
 //   22, 23      -> I2C to the onboard TCA9554PW I/O expander
 // 0/1 are also XTAL_32K and 20/21 are also SDIO alternates, all fine as GPIO.
+// Only the first RELAY_COUNT entries are driven; the full list also documents
+// the 8-channel build.
 static const int RELAY_PINS[8] = { 0, 1, 2, 3, 6, 7, 14, 20 };
-#define RELAY_COUNT 8
+#ifndef RELAY_COUNT
+#define RELAY_COUNT 4
+#endif
 
 // Restore the last relay state after a power cut / reboot.
 // Default 0 (everything off) because a fan or socket switching itself on

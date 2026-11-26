@@ -96,6 +96,26 @@ class CommandResponse(BaseModel):
     error: str | None = None
 
 
+class OAuthConsentRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    client_id: str = Field(min_length=1, max_length=128)
+    redirect_uri: str = Field(min_length=1, max_length=512)
+    id_token: str = Field(min_length=8, max_length=4096)
+    # Google sends an opaque, encrypted state blob that already runs past 500
+    # characters; capping it tighter rejected the sign-in POST.
+    state: str | None = Field(default=None, max_length=4096)
+    scope: str | None = Field(default=None, max_length=1024)
+
+
+class AssistantLinkOut(BaseModel):
+    id: str
+    provider: str
+    client_name: str
+    created_at: datetime | None = None
+    last_used_at: datetime | None = None
+
+
 class ScheduleAction(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
